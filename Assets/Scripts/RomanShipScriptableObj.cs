@@ -10,6 +10,7 @@ public class RomeShip : ScriptableObject
     
     public int crewSize;
     public float attackPower;
+    [Min(0.1f)] public float viewRange = 50f;
     [FormerlySerializedAs("range")]
     [Min(0.1f)] public float closeAttackRange = 10f;
     public bool hasLongRangeAttack;

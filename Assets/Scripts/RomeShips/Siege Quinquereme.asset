@@ -18,5 +18,10 @@ MonoBehaviour:
   mesh: {fileID: 0}
   crewSize: 60
   attackPower: 10
-  range: 60
+  viewRange: 80
+  closeAttackRange: 20
+  hasLongRangeAttack: 1
+  longRangeAttackRange: 60
+  longRangeAttackChance: 0.8
+  attackCooldown: 1.5
   speed: 3.5

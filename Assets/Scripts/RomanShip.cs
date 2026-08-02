@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Splines;
+using float3 = Unity.Mathematics.float3;
 
 public class RomanShip : MonoBehaviour
 {
@@ -15,6 +16,11 @@ public class RomanShip : MonoBehaviour
     private bool _preferTowers;
     private bool _useLongRangeAttack;
     private bool _isEngaging;
+    private bool _isReturningToSpline;
+    private bool _isAligningWithSpline;
+    private Vector3 _returnPoint;
+    private float _returnNormalizedTime;
+    private Quaternion _splineRotation;
     private float _nextAttackTime;
 
     private const float TargetSearchInterval = 0.25f;
@@ -86,10 +92,25 @@ public class RomanShip : MonoBehaviour
         if (shipData == null || !_canLeaveSpline)
             return;
 
+        if (_isReturningToSpline)
+        {
+            SailBackToSpline();
+            return;
+        }
+
+        if (_isAligningWithSpline)
+        {
+            AlignWithSpline();
+            return;
+        }
+
         if (_target == null || _target.IsDestroyed)
         {
             if (_isEngaging)
+            {
                 ReturnToSpline();
+                return;
+            }
 
             if (Time.time >= _nextTargetSearchTime)
             {
@@ -107,16 +128,16 @@ public class RomanShip : MonoBehaviour
 
     private ICombatTarget FindBestTarget()
     {
-        float detectionRange = _useLongRangeAttack ? shipData.longRangeAttackRange : shipData.closeAttackRange;
+        float detectionRange = shipData.viewRange;
         ICombatTarget preferred = null;
         ICombatTarget fallback = null;
         float preferredDistance = float.MaxValue;
         float fallbackDistance = float.MaxValue;
 
-        foreach (CarthaginianTarget candidate in FindObjectsByType<CarthaginianTarget>(FindObjectsSortMode.None))
+        foreach (CarthaginianTarget candidate in FindObjectsByType<CarthaginianTarget>())
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 
-        foreach (CartageHeart candidate in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None))
+        foreach (CartageHeart candidate in FindObjectsByType<CartageHeart>())
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 
         return preferred ?? fallback;
@@ -178,9 +199,47 @@ public class RomanShip : MonoBehaviour
         if (_pathContainer == null)
             return;
 
-        Vector3 localPosition = _pathContainer.transform.InverseTransformPoint(transform.position);
-        SplineUtility.GetNearestPoint(_pathContainer.Spline, localPosition, out _, out float normalizedTime);
-        _splineAnimate.NormalizedTime = normalizedTime;
+        float3 localPosition = _pathContainer.transform.InverseTransformPoint(transform.position);
+        SplineUtility.GetNearestPoint(_pathContainer.Spline, localPosition, out float3 localReturnPoint, out _returnNormalizedTime);
+        _returnPoint = _pathContainer.transform.TransformPoint(localReturnPoint);
+        _isReturningToSpline = true;
+    }
+
+    private void SailBackToSpline()
+    {
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            _returnPoint,
+            _speed * Time.deltaTime);
+        Face(_returnPoint);
+
+        if (Vector3.SqrMagnitude(transform.position - _returnPoint) > 0.0001f)
+            return;
+
+        _isReturningToSpline = false;
+        SetSplineRotation();
+        _isAligningWithSpline = true;
+    }
+
+    private void SetSplineRotation()
+    {
+        _pathContainer.Evaluate(_returnNormalizedTime, out _, out float3 localTangent, out _);
+        Vector3 worldTangent = _pathContainer.transform.TransformDirection(localTangent);
+        worldTangent.y = 0f;
+        _splineRotation = worldTangent.sqrMagnitude > 0.001f
+            ? Quaternion.LookRotation(worldTangent)
+            : transform.rotation;
+    }
+
+    private void AlignWithSpline()
+    {
+        transform.rotation = Quaternion.Lerp(transform.rotation, _splineRotation, 6f * Time.deltaTime);
+        if (Quaternion.Angle(transform.rotation, _splineRotation) > 1f)
+            return;
+
+        transform.rotation = _splineRotation;
+        _isAligningWithSpline = false;
+        _splineAnimate.NormalizedTime = _returnNormalizedTime;
         _splineAnimate.Play();
     }
 
@@ -189,13 +248,16 @@ public class RomanShip : MonoBehaviour
         Vector3 direction = targetPosition - transform.position;
         direction.y = 0f;
         if (direction.sqrMagnitude > 0.001f)
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 8f * Time.deltaTime);
+            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(direction), 8f * Time.deltaTime);
     }
 
     void OnDrawGizmos()
     {
         if (shipData == null)
             return;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, shipData.viewRange);
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, shipData.closeAttackRange);

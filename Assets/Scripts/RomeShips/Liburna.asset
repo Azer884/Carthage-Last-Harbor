@@ -13,10 +13,15 @@ MonoBehaviour:
   m_Name: Liburna
   m_EditorClassIdentifier: Assembly-CSharp::RomeShip
   shipName: Liburna
-  shipDescription: A  light Roman scout vessel. Fast and inexpensive, it forms the
+  shipDescription: A light Roman scout vessel. Fast and inexpensive, it forms the
     backbone of early invasions.
   mesh: {fileID: 0}
   crewSize: 20
   attackPower: 2
-  range: 20
+  viewRange: 35
+  closeAttackRange: 20
+  hasLongRangeAttack: 0
+  longRangeAttackRange: 30
+  longRangeAttackChance: 0.5
+  attackCooldown: 1
   speed: 8
