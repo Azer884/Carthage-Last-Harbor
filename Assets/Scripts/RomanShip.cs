@@ -137,6 +137,9 @@ public class RomanShip : MonoBehaviour
         foreach (CarthaginianTarget candidate in FindObjectsByType<CarthaginianTarget>())
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 
+        foreach (CarthaginianShipCrew candidate in FindObjectsByType<CarthaginianShipCrew>())
+            ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
+
         foreach (CartageHeart candidate in FindObjectsByType<CartageHeart>())
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 

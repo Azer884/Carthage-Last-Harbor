@@ -9,6 +9,7 @@ public class RomeShip : ScriptableObject
     public Mesh mesh;
     
     public int crewSize;
+    [Min(0)] public int bounty = 10;
     public float attackPower;
     [Min(0.1f)] public float viewRange = 50f;
     [FormerlySerializedAs("range")]

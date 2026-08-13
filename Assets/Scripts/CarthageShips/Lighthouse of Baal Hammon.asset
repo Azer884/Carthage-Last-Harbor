@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fee4b7f8f03e742995ec75b81d61eb, type: 3}
+  m_Name: Lighthouse of Baal Hammon
+  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTowerDefinition
+  towerName: Lighthouse of Baal Hammon
+  description: A fortified beacon that calls Carthaginian warships from the harbor.
+    Ship spawning is limited by available crew.
+  prefab: {fileID: 0}
+  requiredZoneId: 
+  levels:
+  - title: I
+    upgradeCost: 50
+    unlockedShips:
+    - shipName: Libyan patrol boat
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 8
+      crewRequired: 8
+      minimumRank: 0
+  - title: II
+    upgradeCost: 100
+    unlockedShips:
+    - shipName: Libyan patrol boat
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 8
+      crewRequired: 8
+      minimumRank: 0
+    - shipName: Numidian Raider
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 10
+      crewRequired: 12
+      minimumRank: 1
+  - title: III
+    upgradeCost: 175
+    unlockedShips:
+    - shipName: Libyan patrol boat
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 8
+      crewRequired: 8
+      minimumRank: 0
+    - shipName: Numidian Raider
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 10
+      crewRequired: 12
+      minimumRank: 1
+    - shipName: Punic Bireme
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 13
+      crewRequired: 18
+      minimumRank: 2
+  - title: IV
+    upgradeCost: 275
+    unlockedShips:
+    - shipName: Libyan patrol boat
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 8
+      crewRequired: 8
+      minimumRank: 0
+    - shipName: Numidian Raider
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 10
+      crewRequired: 12
+      minimumRank: 1
+    - shipName: Punic Bireme
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 13
+      crewRequired: 18
+      minimumRank: 2
+    - shipName: Sacred Quinquereme
+      shipPrefab: {fileID: 0}
+      spawnCooldown: 18
+      crewRequired: 28
+      minimumRank: 2

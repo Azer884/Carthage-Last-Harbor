@@ -17,6 +17,7 @@ MonoBehaviour:
     the harbor from afar.
   mesh: {fileID: 0}
   crewSize: 60
+  bounty: 35
   attackPower: 10
   viewRange: 80
   closeAttackRange: 20

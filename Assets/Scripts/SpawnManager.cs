@@ -35,5 +35,10 @@ public class SpawnManager : MonoBehaviour
 
         romanShip.AssignShip(shipData);
         romanShip.SetCombatDecision(willAttack, willPreferTowers);
+
+        RomanShipHealth health = ship.GetComponent<RomanShipHealth>();
+        if (health == null)
+            health = ship.AddComponent<RomanShipHealth>();
+        health.Configure(shipData.crewSize, shipData.bounty);
     }
 }

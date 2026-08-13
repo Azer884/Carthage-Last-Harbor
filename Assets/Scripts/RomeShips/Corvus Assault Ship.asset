@@ -17,6 +17,7 @@ MonoBehaviour:
     heavy damage to harbor defenses.
   mesh: {fileID: 0}
   crewSize: 40
+  bounty: 20
   attackPower: 6
   viewRange: 45
   closeAttackRange: 25
