@@ -25,6 +25,9 @@ public class TowerLevel
 {
     public string title = "Level I";
     [Min(1)] public int upgradeCost = 50;
+    [Tooltip("Construction crew consumed when this level is purchased. Set 0 if this upgrade only costs money.")]
+    [Min(0)] public int upgradeCrewRequired;
+    public CrewRank minimumUpgradeCrewRank = CrewRank.Recruit;
     public CarthaginianShipOption[] unlockedShips;
 }
 
@@ -33,6 +36,7 @@ public class CarthaginianShipOption
 {
     public string shipName = "Libyan Galley";
     public GameObject shipPrefab;
+    [Min(0)] public int shipCost = 20;
     [Min(0.1f)] public float spawnCooldown = 8f;
     [Min(1)] public int crewRequired = 8;
     public CrewRank minimumRank = CrewRank.Recruit;

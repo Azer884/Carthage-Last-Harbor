@@ -31,6 +31,7 @@ public class TowerPlacementController : MonoBehaviour
         if (definition == null || definition.prefab == null || !IsValidResourcePlacement(definition, position)) return false;
         if (definition.buildCost > 0 && (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(definition.buildCost))) return false;
         GameObject building = Instantiate(definition.prefab, position, rotation);
+        TowerSelectionManager.EnsureSelectableCollider(building);
         CarthaginianResourceTower resourceTower = building.GetComponent<CarthaginianResourceTower>();
         if (resourceTower != null) resourceTower.Initialize(definition);
         TowerSelectionManager.Ensure().Select(building);
@@ -48,8 +49,10 @@ public class TowerPlacementController : MonoBehaviour
         bool valid = _selectedResourceTower != null ? IsValidResourcePlacement(_selectedResourceTower, hit.point) : IsValidPlacement(_selectedTower, hit.point);
         UpdatePreview(hit.point, valid);
         if (!Mouse.current.leftButton.wasPressedThisFrame || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) || !valid) return;
-        if (_selectedResourceTower != null) TryPlaceResource(_selectedResourceTower, hit.point, Quaternion.identity);
-        else TryPlace(_selectedTower, hit.point, Quaternion.identity);
+        bool placed = _selectedResourceTower != null
+            ? TryPlaceResource(_selectedResourceTower, hit.point, Quaternion.identity)
+            : TryPlace(_selectedTower, hit.point, Quaternion.identity);
+        if (placed) CancelPlacement();
     }
 
     public bool TryPlace(CarthaginianTowerDefinition definition, Vector3 position, Quaternion rotation)
@@ -57,6 +60,7 @@ public class TowerPlacementController : MonoBehaviour
         if (definition == null || definition.prefab == null || !IsValidPlacement(definition, position)) return false;
         if (definition.buildCost > 0 && (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(definition.buildCost))) return false;
         GameObject tower = Instantiate(definition.prefab, position, rotation);
+        TowerSelectionManager.EnsureSelectableCollider(tower);
         CarthaginianTower runtimeTower = tower.GetComponent<CarthaginianTower>();
         if (runtimeTower != null) runtimeTower.Initialize(definition);
         TowerSelectionManager.Ensure().Select(tower);
@@ -107,6 +111,7 @@ public class TowerPlacementController : MonoBehaviour
         _placementPreview = Instantiate(prefab);
         _placementPreview.name = "Placement Preview (not built)";
         foreach (MonoBehaviour behaviour in _placementPreview.GetComponentsInChildren<MonoBehaviour>()) behaviour.enabled = false;
+        foreach (CarthaginianTarget target in _placementPreview.GetComponentsInChildren<CarthaginianTarget>()) target.SetTargetable(false);
         foreach (Collider collider in _placementPreview.GetComponentsInChildren<Collider>()) collider.enabled = false;
         foreach (Renderer renderer in _placementPreview.GetComponentsInChildren<Renderer>())
             foreach (Material material in renderer.materials)

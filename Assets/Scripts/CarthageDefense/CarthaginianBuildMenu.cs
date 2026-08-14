@@ -35,6 +35,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         EnsureEventSystem();
         TowerSelectionManager.Ensure();
+        if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
         CreateMenu();
     }
 
@@ -177,6 +178,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
         text.AppendLine().Append("Build cost: ").Append(definition.buildCost).Append(" coin");
         text.Append("\nPlacement: ").Append(string.IsNullOrEmpty(definition.requiredZoneId) ? "Any valid sea" : definition.requiredZoneId);
         if (definition.levels != null && definition.levels.Length > 0) text.Append("\nLevels: ").Append(definition.levels.Length);
+        if (definition.levels != null && definition.levels.Length > 0 && definition.levels[0].unlockedShips != null)
+            foreach (CarthaginianShipOption ship in definition.levels[0].unlockedShips)
+                if (ship != null) text.Append("\nShip: ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin");
         return text.ToString();
     }
 

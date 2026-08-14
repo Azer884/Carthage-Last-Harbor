@@ -8,6 +8,7 @@ public class CarthaginianStationaryTower : MonoBehaviour
     private int _activeLevel;
     private RomanShipHealth _target;
     private float _nextAttackTime;
+    public StationaryTowerLevel ActiveStats => levels != null && levels.Length > 0 ? levels[Mathf.Clamp(_activeLevel, 0, levels.Length - 1)] : null;
 
     public void SetLevel(int level)
     {

@@ -21,6 +21,13 @@ public class CarthaginianShipCombat : MonoBehaviour
     private RomanShipHealth _target;
     private CarthaginianShipCrew _crew;
     private float _nextAttackTime;
+    public float SailSpeed => sailSpeed;
+    public float WanderRange => wanderRange;
+    public float SightRange => sightRange;
+    public float AttackRange => hasLongRangeAttack ? longRangeAttackRange : closeAttackRange;
+    public bool HasLongRangeAttack => hasLongRangeAttack;
+    public float AttackDamage => attackDamage;
+    public float AttackCooldown => attackCooldown;
 
     private void Awake()
     {

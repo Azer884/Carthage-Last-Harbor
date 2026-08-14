@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6560247572916665022}
   - component: {fileID: 1873995615500466736}
   - component: {fileID: 5943878666547131356}
+  - component: {fileID: 1865588513663212431}
   m_Layer: 0
   m_Name: CartageShip
   m_TagString: CartageShip
@@ -143,3 +144,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTower
   definition: {fileID: 11400000, guid: d520fd357b2e0f84b8254d50f2c96460, type: 2}
   currentLevel: 0
+--- !u!114 &1865588513663212431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4672277572902736373}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0.9175284, b: 0, a: 1}
+  outlineWidth: 2.03
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []

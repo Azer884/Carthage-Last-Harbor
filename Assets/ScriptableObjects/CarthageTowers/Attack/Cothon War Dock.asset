@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fee4b7f8f03e742995ec75b81d61eb, type: 3}
+  m_Name: Cothon War Dock
+  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTowerDefinition
+  towerName: Cothon War Dock
+  description: A military dock for tougher ramming ships and naval escorts.
+  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  category: 0
+  prefab: {fileID: 4672277572902736373, guid: 6f1a9617d2e0ced4296e0a18da912dbb, type: 3}
+  buildCost: 50
+  requiredZoneId: 
+  levels:
+  - title: I
+    upgradeCost: 75
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips:
+    - shipName: Ram Galley
+      shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
+      shipCost: 20
+      spawnCooldown: 10
+      crewRequired: 10
+      minimumRank: 1
+  - title: II
+    upgradeCost: 150
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips:
+    - shipName: Ram Galley
+      shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
+      shipCost: 20
+      spawnCooldown: 10
+      crewRequired: 10
+      minimumRank: 1
+    - shipName: Punic Trireme
+      shipPrefab: {fileID: 8430389561660976940, guid: 905834e63c8326840a9b8117dda212f2, type: 3}
+      shipCost: 20
+      spawnCooldown: 13
+      crewRequired: 16
+      minimumRank: 1
+  - title: III
+    upgradeCost: 250
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips:
+    - shipName: Ram Galley
+      shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
+      shipCost: 20
+      spawnCooldown: 10
+      crewRequired: 10
+      minimumRank: 1
+    - shipName: Punic Trireme
+      shipPrefab: {fileID: 8430389561660976940, guid: 905834e63c8326840a9b8117dda212f2, type: 3}
+      shipCost: 20
+      spawnCooldown: 13
+      crewRequired: 16
+      minimumRank: 1
+    - shipName: Veteran Trireme
+      shipPrefab: {fileID: 5639563526874707969, guid: e09acd97639e6944bbce0c7d0216899c, type: 3}
+      shipCost: 20
+      spawnCooldown: 16
+      crewRequired: 22
+      minimumRank: 2
+  - title: IV
+    upgradeCost: 400
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips:
+    - shipName: Ram Galley
+      shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
+      shipCost: 20
+      spawnCooldown: 10
+      crewRequired: 10
+      minimumRank: 1
+    - shipName: Punic Trireme
+      shipPrefab: {fileID: 8430389561660976940, guid: 905834e63c8326840a9b8117dda212f2, type: 3}
+      shipCost: 20
+      spawnCooldown: 13
+      crewRequired: 16
+      minimumRank: 1
+    - shipName: Veteran Trireme
+      shipPrefab: {fileID: 5639563526874707969, guid: e09acd97639e6944bbce0c7d0216899c, type: 3}
+      shipCost: 20
+      spawnCooldown: 16
+      crewRequired: 22
+      minimumRank: 2
+    - shipName: Cothon Heavy Quinquereme
+      shipPrefab: {fileID: 3315501919347003055, guid: 10f178bb8092d464288e86e766394a73, type: 3}
+      shipCost: 20
+      spawnCooldown: 22
+      crewRequired: 32
+      minimumRank: 3

@@ -10,10 +10,14 @@ public class CarthaginianTarget : MonoBehaviour, ICombatTarget
     [SerializeField] private bool destroyGameObjectOnDeath = true;
 
     private float _currentHealth;
+    private bool _isTargetable = true;
 
     public Transform TargetTransform => transform;
     public CarthaginianTargetType TargetType => targetType;
-    public bool IsDestroyed => _currentHealth <= 0f;
+    public bool IsDestroyed => !_isTargetable || _currentHealth <= 0f;
+
+    /// <summary>Used by placement ghosts so enemy ships never attack an unbuilt preview.</summary>
+    public void SetTargetable(bool targetable) { _isTargetable = targetable; }
 
     private void Awake()
     {
