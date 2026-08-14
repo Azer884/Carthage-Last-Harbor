@@ -377,6 +377,9 @@ MonoBehaviour:
   useMapBounds: 1
   minimumMapPosition: {x: -55, y: -55}
   maximumMapPosition: {x: 55, y: 55}
+  lookAtMouse: 1
+  mouseLookPlaneY: 0
+  mouseLookAreaSize: {x: 30, y: 30}
 --- !u!1 &375140317
 GameObject:
   m_ObjectHideFlags: 0
@@ -423,6 +426,58 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 74.08695, y: 1029.5251, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &403298265
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 403298267}
+  - component: {fileID: 403298266}
+  m_Layer: 0
+  m_Name: PathArrowVisualizer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &403298266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403298265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 218e8749756851d45b77b5385095e0bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PathArrowVisualizer
+  pathColor: {r: 0.95, g: 0.72, b: 0.18, a: 0.8}
+  arrowColor: {r: 1, g: 0.93, b: 0.45, a: 0.95}
+  pathWidth: 0.02
+  arrowWidth: 2
+  arrowSpacing: 15
+  sampleCount: 80
+  arrowSize: 5
+  heightOffset: 0.08
+--- !u!4 &403298267
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403298265}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1958,7 +2013,7 @@ MonoBehaviour:
       attackChancePercent: 0
       towerAttackChancePercent: 0
   timeBetweenWaves: 3
-  autoStartWaves: 1
+  autoStartWaves: 0
 --- !u!4 &1752899031
 Transform:
   m_ObjectHideFlags: 0
@@ -2619,3 +2674,4 @@ SceneRoots:
   - {fileID: 1933037897}
   - {fileID: 1915975826}
   - {fileID: 6552795839496389636}
+  - {fileID: 403298267}

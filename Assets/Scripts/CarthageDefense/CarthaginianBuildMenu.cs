@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -24,6 +25,10 @@ public class CarthaginianBuildMenu : MonoBehaviour
     [SerializeField] private Color resourceColor = new Color(0.18f, 0.40f, 0.24f, 0.95f);
 
     private Font _font;
+    private Text _moneyText;
+    private Text _crewText;
+    private Text _workerText;
+    private Button _startWaveButton;
     private Text _tooltip;
     private GameObject _tooltipPanel;
     private RectTransform _menu;
@@ -31,17 +36,18 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void Awake()
     {
-        if (placementController == null) placementController = FindFirstObjectByType<TowerPlacementController>();
+        if (placementController == null) placementController = FindAnyObjectByType<TowerPlacementController>();
         _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         EnsureEventSystem();
         TowerSelectionManager.Ensure();
         if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
+        EnsurePathArrowVisualizer();
         CreateMenu();
     }
 
     private void EnsureEventSystem()
     {
-        EventSystem existing = FindFirstObjectByType<EventSystem>();
+        EventSystem existing = FindAnyObjectByType<EventSystem>();
         if (existing != null)
         {
             StandaloneInputModule legacyModule = existing.GetComponent<StandaloneInputModule>();
@@ -72,8 +78,14 @@ public class CarthaginianBuildMenu : MonoBehaviour
         CreateSection(menu, "ATTACK FLEET", attackTowers, attackColor, 2);
         CreateSection(menu, "CORE DEFENSE", defenseTowers, defenseColor, 1);
         CreateResourceSection(menu, "RESOURCES", resourceTowers, resourceColor, 0);
+        CreateStatusBar(root.transform);
         CreateTooltip(root.transform);
         CreateToggleButton(root.transform);
+    }
+
+    private void Update()
+    {
+        RefreshStatusBar();
     }
 
     private void CreateSection(RectTransform parent, string heading, CarthaginianTowerDefinition[] definitions, Color color, int index)
@@ -146,6 +158,77 @@ public class CarthaginianBuildMenu : MonoBehaviour
         rect.anchorMin = new Vector2(0f, .88f); rect.anchorMax = new Vector2(.13f, .95f);
         rect.offsetMin = new Vector2(18f, 0f); rect.offsetMax = Vector2.zero;
         button.onClick.AddListener(ToggleMenu);
+    }
+
+    private void CreateStatusBar(Transform parent)
+    {
+        RectTransform bar = CreatePanel("Status Bar", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        bar.anchorMin = new Vector2(.30f, .91f);
+        bar.anchorMax = new Vector2(.98f, .985f);
+        bar.offsetMin = Vector2.zero;
+        bar.offsetMax = Vector2.zero;
+        _startWaveButton = CreateButton(bar, "START WAVE", null, 0, 1);
+        RectTransform startRect = _startWaveButton.GetComponent<RectTransform>();
+        startRect.anchorMin = new Vector2(.02f, .15f);
+        startRect.anchorMax = new Vector2(.20f, .85f);
+        startRect.offsetMin = Vector2.zero;
+        startRect.offsetMax = Vector2.zero;
+        _startWaveButton.onClick.AddListener(() => GameManger.Instance?.StartWaveSystem());
+
+        _moneyText = CreateText("Coins: -- TND", bar, 16, TextAnchor.MiddleLeft, new Vector2(.24f, .18f), new Vector2(.52f, .82f));
+        _crewText = CreateText("Crew: --", bar, 16, TextAnchor.MiddleLeft, new Vector2(.54f, .18f), new Vector2(.78f, .82f));
+        _workerText = CreateText("Workers: --", bar, 16, TextAnchor.MiddleLeft, new Vector2(.80f, .18f), new Vector2(.98f, .82f));
+    }
+
+    private void EnsurePathArrowVisualizer()
+    {
+        if (FindPathArrowVisualizer() != null) return;
+
+        Type visualizerType = FindTypeByName("PathArrowVisualizer");
+        if (visualizerType == null) return;
+
+        new GameObject("Path Arrow Visualizer").AddComponent(visualizerType);
+    }
+
+    private Component FindPathArrowVisualizer()
+    {
+        foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            if (behaviour != null && behaviour.GetType().Name == "PathArrowVisualizer")
+                return behaviour;
+        return null;
+    }
+
+    private Type FindTypeByName(string typeName)
+    {
+        foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type type = assembly.GetType(typeName);
+            if (type != null) return type;
+        }
+
+        return null;
+    }
+
+    private void RefreshStatusBar()
+    {
+        if (_moneyText != null)
+            _moneyText.text = EconomyManager.Instance != null ? "Coins: " + EconomyManager.Instance.Money + " TND" : "Coins: -- TND";
+
+        if (_crewText != null)
+            _crewText.text = "Crew available: " + GetTotalCrewAvailable();
+
+        if (_workerText != null)
+            _workerText.text = WorkerRoster.Instance != null ? "Workers available: " + WorkerRoster.Instance.AvailableWorkers : "Workers available: --";
+    }
+
+    private int GetTotalCrewAvailable()
+    {
+        if (CrewRoster.Instance == null) return 0;
+
+        int total = 0;
+        foreach (CrewRank rank in Enum.GetValues(typeof(CrewRank)))
+            total += CrewRoster.Instance.GetAvailable(rank);
+        return total;
     }
 
     public void ToggleMenu()

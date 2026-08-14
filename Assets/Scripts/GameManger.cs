@@ -149,6 +149,11 @@ public class GameManger : MonoBehaviour
         return splineContainer;
     }
 
+    public GameObject[] GetPathObjects()
+    {
+        return paths ?? Array.Empty<GameObject>();
+    }
+
     [Serializable]
     public class WaveDefinition
     {
