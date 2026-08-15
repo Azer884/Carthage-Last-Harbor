@@ -180,7 +180,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &155671773
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -460,13 +460,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 218e8749756851d45b77b5385095e0bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathArrowVisualizer
-  pathColor: {r: 0.95, g: 0.72, b: 0.18, a: 0.8}
   arrowColor: {r: 1, g: 0.93, b: 0.45, a: 0.95}
-  pathWidth: 0.02
   arrowWidth: 2
   arrowSpacing: 15
   sampleCount: 80
-  arrowSize: 5
+  arrowSize: 4
+  arrowTravelSpeed: 25
+  minimumArrowsPerPath: 3
+  defaultArrowOffset: {x: 0, y: 0, z: 0}
+  pathOffsets:
+  - pathName: Path1
+    offset: {x: 108.9, y: -3.8, z: 125.9}
+  - pathName: Path2
+    offset: {x: -87.68744, y: -3.8, z: 64.25923}
   heightOffset: 0.08
 --- !u!4 &403298267
 Transform:
@@ -1320,7 +1326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f599bea601f9e9848bfb971b05c3ca15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyPathPlacementBlocker
-  extraClearance: 2
+  extraClearance: 4
 --- !u!1 &890684689
 GameObject:
   m_ObjectHideFlags: 0
@@ -1360,8 +1366,8 @@ MonoBehaviour:
   enemyPathMask:
     serializedVersion: 2
     m_Bits: 128
-  pathClearance: 2
-  towerSpacing: 3
+  pathClearance: 4
+  towerSpacing: 8
 --- !u!4 &890684692
 Transform:
   m_ObjectHideFlags: 0
@@ -1788,7 +1794,7 @@ Transform:
   m_GameObject: {fileID: 1170611278}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 87.68744, y: 3.8000114, z: -64.25923}
+  m_LocalPosition: {x: 87.68744, y: 3.8, z: -64.25923}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1806,7 +1812,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f599bea601f9e9848bfb971b05c3ca15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyPathPlacementBlocker
-  extraClearance: 2
+  extraClearance: 4
 --- !u!1 &1228719309
 GameObject:
   m_ObjectHideFlags: 0
@@ -2045,7 +2051,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1795322098
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2408,7 +2414,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1933037896
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2659,6 +2665,7 @@ SceneRoots:
   - {fileID: 375140319}
   - {fileID: 890684692}
   - {fileID: 1110699413}
+  - {fileID: 403298267}
   - {fileID: 730781651}
   - {fileID: 330585546}
   - {fileID: 410087041}
@@ -2674,4 +2681,3 @@ SceneRoots:
   - {fileID: 1933037897}
   - {fileID: 1915975826}
   - {fileID: 6552795839496389636}
-  - {fileID: 403298267}

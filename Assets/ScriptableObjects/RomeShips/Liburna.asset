@@ -17,9 +17,10 @@ MonoBehaviour:
     backbone of early invasions.
   mesh: {fileID: 0}
   crewSize: 20
+  bounty: 10
   attackPower: 2
   viewRange: 35
-  closeAttackRange: 20
+  closeAttackRange: 10
   hasLongRangeAttack: 0
   longRangeAttackRange: 30
   longRangeAttackChance: 0.5

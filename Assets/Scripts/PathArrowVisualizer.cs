@@ -7,18 +7,21 @@ using UnityEngine.Splines;
 public class PathArrowVisualizer : MonoBehaviour
 {
     [Header("Arrow Style")]
-    [SerializeField] private Color pathColor = new Color(.95f, .72f, .18f, .8f);
     [SerializeField] private Color arrowColor = new Color(1f, .93f, .45f, .95f);
-    [SerializeField, Min(.02f)] private float pathWidth = .12f;
     [SerializeField, Min(.02f)] private float arrowWidth = .08f;
     [SerializeField, Min(.5f)] private float arrowSpacing = 7f;
     [SerializeField, Min(12)] private int sampleCount = 80;
     [SerializeField, Min(.1f)] private float arrowSize = 1.4f;
-    [SerializeField] private float heightOffset = .08f;
+    [SerializeField, Min(.1f)] private float arrowTravelSpeed = 2.5f;
+    [SerializeField, Min(1)] private int minimumArrowsPerPath = 3;
+    [SerializeField] private Vector3 defaultArrowOffset;
+    [SerializeField] private PathOffset[] pathOffsets;
+    [SerializeField] private float heightOffset;
 
     private static Material _sharedMaterial;
     private bool _built;
-    private readonly List<GameObject> _generated = new List<GameObject>();
+    private bool _isVisible = true;
+    private readonly List<PathVisual> _pathVisuals = new List<PathVisual>();
 
     private void Start()
     {
@@ -30,13 +33,28 @@ public class PathArrowVisualizer : MonoBehaviour
         if (!_built)
         {
             TryBuild();
+            return;
         }
+
+        bool shouldShow = GameManger.Instance == null || !GameManger.Instance.IsWaveRunning;
+        if (_isVisible != shouldShow)
+        {
+            SetVisualsVisible(shouldShow);
+        }
+
+        if (!_isVisible)
+        {
+            return;
+        }
+
+        UpdateArrows();
     }
 
     private void OnDisable()
     {
         Clear();
         _built = false;
+        _isVisible = true;
     }
 
     private void TryBuild()
@@ -76,23 +94,20 @@ public class PathArrowVisualizer : MonoBehaviour
 
         GameObject root = new GameObject(pathName + " Path Arrows");
         root.transform.SetParent(transform, false);
-        _generated.Add(root);
-
-        LineRenderer pathLine = CreateLineRenderer(root.transform, pathColor, pathWidth, "Path Line");
-        Vector3[] pathPoints = new Vector3[samples.Count];
-        for (int i = 0; i < samples.Count; i++)
-        {
-            pathPoints[i] = samples[i].Position;
-        }
-        pathLine.positionCount = pathPoints.Length;
-        pathLine.SetPositions(pathPoints);
 
         float totalLength = samples[samples.Count - 1].Distance;
-        for (float distance = arrowSpacing; distance < totalLength; distance += arrowSpacing)
+        int arrowCount = Mathf.Max(minimumArrowsPerPath, Mathf.CeilToInt(totalLength / Mathf.Max(arrowSpacing, 0.01f)));
+        List<PathArrowInstance> arrows = new List<PathArrowInstance>(arrowCount);
+        float step = totalLength / arrowCount;
+        for (int i = 0; i < arrowCount; i++)
         {
-            PathSample sample = SampleAtDistance(samples, distance);
-            CreateArrowMarker(root.transform, sample.Position, sample.Tangent);
+            float baseDistance = i * step;
+            LineRenderer markerLine = CreateArrowMarker(root.transform, "Arrow " + (i + 1));
+            markerLine.sortingOrder = 1;
+            arrows.Add(new PathArrowInstance { Line = markerLine, BaseDistance = baseDistance });
         }
+
+        _pathVisuals.Add(new PathVisual { Root = root, Samples = samples, TotalLength = totalLength, Arrows = arrows, Offset = GetOffsetForPath(pathName) });
     }
 
     private List<PathSample> SampleSpline(SplineContainer spline)
@@ -155,35 +170,84 @@ public class PathArrowVisualizer : MonoBehaviour
         return samples[samples.Count - 1];
     }
 
-    private void CreateArrowMarker(Transform parent, Vector3 position, Vector3 direction)
+    private LineRenderer CreateArrowMarker(Transform parent, string objectName)
     {
+        GameObject marker = new GameObject(objectName);
+        marker.transform.SetParent(parent, false);
+        return CreateLineRenderer(marker.transform, arrowColor, arrowWidth, "Arrow Line", false);
+    }
+
+    private void UpdateArrows()
+    {
+        float time = Time.time * arrowTravelSpeed;
+        foreach (PathVisual visual in _pathVisuals)
+        {
+            if (visual == null || visual.Arrows == null || visual.Arrows.Count == 0)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < visual.Arrows.Count; i++)
+            {
+                PathArrowInstance arrow = visual.Arrows[i];
+                if (arrow.Line == null)
+                {
+                    continue;
+                }
+
+                float distance = Mathf.Repeat(arrow.BaseDistance + time, visual.TotalLength);
+                PathSample sample = SampleAtDistance(visual.Samples, distance);
+                SetArrowGeometry(arrow, sample.Position + visual.Offset, sample.Tangent);
+            }
+        }
+    }
+
+    private Vector3 GetOffsetForPath(string pathName)
+    {
+        if (pathOffsets != null)
+        {
+            for (int i = 0; i < pathOffsets.Length; i++)
+            {
+                if (pathOffsets[i].Matches(pathName))
+                {
+                    return pathOffsets[i].offset;
+                }
+            }
+        }
+
+        return defaultArrowOffset;
+    }
+
+    private void SetArrowGeometry(PathArrowInstance arrow, Vector3 position, Vector3 direction)
+    {
+        if (arrow == null || arrow.Line == null)
+        {
+            return;
+        }
+
         if (direction.sqrMagnitude < 0.0001f)
         {
             return;
         }
 
-        Vector3 forward = direction.normalized;
-        Vector3 backward = -(forward * (arrowSize * .55f));
-        Vector3 side = Vector3.Cross(Vector3.up, forward).normalized * (arrowSize * .38f);
-        Vector3 tip = position + forward * arrowSize;
-        Vector3 left = position + backward + side;
-        Vector3 right = position + backward - side;
+        Transform markerTransform = arrow.Line.transform.parent;
+        markerTransform.position = position;
+        markerTransform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
 
-        GameObject marker = new GameObject("Arrow");
-        marker.transform.SetParent(parent, false);
-        _generated.Add(marker);
+        Vector3 tip = new Vector3(0f, 0f, arrowSize * .5f);
+        Vector3 rear = new Vector3(0f, 0f, -arrowSize * .5f);
+        Vector3 side = Vector3.right * (arrowSize * .35f);
 
-        LineRenderer markerLine = CreateLineRenderer(marker.transform, arrowColor, arrowWidth, "Arrow Line");
-        markerLine.positionCount = 3;
-        markerLine.SetPositions(new[] { left, tip, right });
+        arrow.Line.positionCount = 3;
+        arrow.Line.SetPositions(new[] { rear + side, tip, rear - side });
     }
 
-    private LineRenderer CreateLineRenderer(Transform parent, Color color, float width, string objectName)
+    private LineRenderer CreateLineRenderer(Transform parent, Color color, float width, string objectName, bool useWorldSpace = true)
     {
         GameObject lineObject = new GameObject(objectName, typeof(LineRenderer));
         lineObject.transform.SetParent(parent, false);
         LineRenderer line = lineObject.GetComponent<LineRenderer>();
-        line.useWorldSpace = true;
+        line.useWorldSpace = useWorldSpace;
         line.alignment = LineAlignment.View;
         line.widthMultiplier = width;
         line.numCapVertices = 4;
@@ -195,6 +259,20 @@ public class PathArrowVisualizer : MonoBehaviour
         line.receiveShadows = false;
         line.material = GetSharedMaterial();
         return line;
+    }
+
+    private void SetVisualsVisible(bool visible)
+    {
+        _isVisible = visible;
+        for (int i = 0; i < _pathVisuals.Count; i++)
+        {
+            if (_pathVisuals[i] == null || _pathVisuals[i].Root == null)
+            {
+                continue;
+            }
+
+            _pathVisuals[i].Root.SetActive(visible);
+        }
     }
 
     private Material GetSharedMaterial()
@@ -216,15 +294,46 @@ public class PathArrowVisualizer : MonoBehaviour
 
     private void Clear()
     {
-        for (int i = _generated.Count - 1; i >= 0; i--)
+        for (int i = _pathVisuals.Count - 1; i >= 0; i--)
         {
-            if (_generated[i] != null)
+            PathVisual visual = _pathVisuals[i];
+            if (visual != null)
             {
-                Destroy(_generated[i]);
+                if (visual.Root != null)
+                {
+                    Destroy(visual.Root);
+                }
             }
         }
 
-        _generated.Clear();
+        _pathVisuals.Clear();
+    }
+
+    private class PathVisual
+    {
+        public GameObject Root;
+        public List<PathSample> Samples;
+        public float TotalLength;
+        public List<PathArrowInstance> Arrows;
+        public Vector3 Offset;
+    }
+
+    [System.Serializable]
+    private struct PathOffset
+    {
+        public string pathName;
+        public Vector3 offset;
+
+        public bool Matches(string otherPathName)
+        {
+            return !string.IsNullOrWhiteSpace(pathName) && string.Equals(pathName, otherPathName, System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private class PathArrowInstance
+    {
+        public LineRenderer Line;
+        public float BaseDistance;
     }
 
     private struct PathSample

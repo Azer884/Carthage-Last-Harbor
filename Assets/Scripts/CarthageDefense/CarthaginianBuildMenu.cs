@@ -6,6 +6,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.InputSystem.UI;
 
+namespace CarthageDefense
+{
 /// <summary>
 /// Generates the complete build UI at runtime. Add it to any scene object: no Canvas, buttons,
 /// panels, or EventSystem need to be created manually.
@@ -157,6 +159,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         RectTransform rect = button.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0f, .88f); rect.anchorMax = new Vector2(.13f, .95f);
         rect.offsetMin = new Vector2(18f, 0f); rect.offsetMax = Vector2.zero;
+        CenterButtonLabel(button);
         button.onClick.AddListener(ToggleMenu);
     }
 
@@ -173,6 +176,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         startRect.anchorMax = new Vector2(.20f, .85f);
         startRect.offsetMin = Vector2.zero;
         startRect.offsetMax = Vector2.zero;
+        CenterButtonLabel(_startWaveButton);
         _startWaveButton.onClick.AddListener(() => GameManger.Instance?.StartWaveSystem());
 
         _moneyText = CreateText("Coins: -- TND", bar, 16, TextAnchor.MiddleLeft, new Vector2(.24f, .18f), new Vector2(.52f, .82f));
@@ -229,6 +233,19 @@ public class CarthaginianBuildMenu : MonoBehaviour
         foreach (CrewRank rank in Enum.GetValues(typeof(CrewRank)))
             total += CrewRoster.Instance.GetAvailable(rank);
         return total;
+    }
+
+    private void CenterButtonLabel(Button button)
+    {
+        if (button == null) return;
+        Text label = button.GetComponentInChildren<Text>();
+        if (label == null) return;
+        label.alignment = TextAnchor.MiddleCenter;
+        RectTransform rect = label.rectTransform;
+        rect.anchorMin = new Vector2(.04f, .05f);
+        rect.anchorMax = new Vector2(.96f, .95f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
     }
 
     public void ToggleMenu()
@@ -314,3 +331,6 @@ public class BuildMenuTooltipHover : MonoBehaviour, IPointerEnterHandler, IPoint
     public void OnPointerEnter(PointerEventData eventData) { if (_menu != null) _menu.ShowTooltip(_text); }
     public void OnPointerExit(PointerEventData eventData) { if (_menu != null) _menu.HideTooltip(); }
 }
+
+}
+

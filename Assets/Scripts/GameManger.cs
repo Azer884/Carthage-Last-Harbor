@@ -20,6 +20,8 @@ public class GameManger : MonoBehaviour
     private Coroutine _waveRoutine;
     private int _currentWaveIndex;
 
+    public bool IsWaveRunning => _waveRoutine != null;
+
     private void Awake()
     {
         if (Instance == null)
