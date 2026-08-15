@@ -5,7 +5,11 @@ public class CarthaginianTower : MonoBehaviour
 {
     [SerializeField] private CarthaginianTowerDefinition definition;
     [SerializeField] private int currentLevel;
+    [Tooltip("Uncheck for fixed civic buildings (e.g. Sidi Bou Said) that the player should never be able to sell off.")]
+    [SerializeField] private bool sellable = true;
     public CarthaginianTowerDefinition Definition => definition;
+    public bool Sellable => sellable;
+    public void SetSellable(bool value) { sellable = value; }
     public int CurrentLevel => currentLevel;
     public TowerLevel ActiveLevel => definition != null && definition.levels != null && definition.levels.Length > 0
         ? definition.levels[Mathf.Clamp(currentLevel, 0, definition.levels.Length - 1)] : null;
@@ -22,6 +26,8 @@ public class CarthaginianTower : MonoBehaviour
         if (lighthouse != null) lighthouse.SetTower(this);
         CarthaginianStationaryTower stationaryTower = GetComponent<CarthaginianStationaryTower>();
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
+        SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
+        if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
     }
 
     public void Initialize(CarthaginianTowerDefinition towerDefinition)
@@ -32,6 +38,8 @@ public class CarthaginianTower : MonoBehaviour
         if (lighthouse != null) lighthouse.SetTower(this);
         CarthaginianStationaryTower stationaryTower = GetComponent<CarthaginianStationaryTower>();
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
+        SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
+        if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
     }
 
     public bool TryUpgrade()
@@ -46,6 +54,8 @@ public class CarthaginianTower : MonoBehaviour
         currentLevel++;
         CarthaginianStationaryTower stationaryTower = GetComponent<CarthaginianStationaryTower>();
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
+        SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
+        if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
         return true;
     }
 

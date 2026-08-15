@@ -16,11 +16,34 @@ public class GameManger : MonoBehaviour
     [SerializeField] private List<WaveDefinition> waves = new();
     [SerializeField, Min(0f)] private float timeBetweenWaves = 3f;
     [SerializeField] private bool autoStartWaves = true;
+    [SerializeField, Min(0f)] private float autoStartDelay = 20f;
+    [Tooltip("Once the hand-authored wave list is exhausted, keep replaying the final wave with ship counts scaled up exponentially.")]
+    [SerializeField] private bool endlessScaling = true;
+    [SerializeField, Min(1f)] private float difficultyGrowthPerWave = 1.18f;
 
     private Coroutine _waveRoutine;
     private int _currentWaveIndex;
+    private float _autoStartTimer;
+    private bool _autoStartPending;
 
-    public bool IsWaveRunning => _waveRoutine != null;
+    public bool IsWaveRunning => (_waveRoutine != null || AnyRomanShipsAlive()) && !CartageHeart.HasBeenDestroyed;
+    public bool IsAutoStartPending => _autoStartPending;
+    public float AutoStartTimeRemaining => _autoStartPending ? Mathf.Max(0f, _autoStartTimer) : 0f;
+    public int CurrentWaveIndex => _currentWaveIndex;
+    public event Action<int> WaveStarted;
+
+    private bool AnyRomanShipsAlive()
+    {
+        foreach (RomanShipHealth ship in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
+        {
+            if (!ship.IsDestroyed)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void Awake()
     {
@@ -38,22 +61,49 @@ public class GameManger : MonoBehaviour
     {
         if (autoStartWaves)
         {
-            StartWaveSystem();
+            BeginAutoStartCountdown();
         }
+    }
+
+    private void Update()
+    {
+        if (!_autoStartPending)
+        {
+            return;
+        }
+
+        _autoStartTimer -= Time.deltaTime;
+        if (_autoStartTimer > 0f)
+        {
+            return;
+        }
+
+        _autoStartPending = false;
+        StartWaveSystem();
+    }
+
+    private void BeginAutoStartCountdown()
+    {
+        _autoStartPending = true;
+        _autoStartTimer = autoStartDelay;
     }
 
     public void StartWaveSystem()
     {
+        _autoStartPending = false;
         if (_waveRoutine != null)
         {
             return;
         }
 
+        if (SfxManager.Instance != null) SfxManager.Instance.PlayWaveStart();
+        if (MusicManager.Instance != null) MusicManager.Instance.PlayWaveMusic();
         _waveRoutine = StartCoroutine(RunWaves());
     }
 
     public void ResetWaveSystem()
     {
+        _autoStartPending = false;
         if (_waveRoutine != null)
         {
             StopCoroutine(_waveRoutine);
@@ -79,9 +129,9 @@ public class GameManger : MonoBehaviour
             yield break;
         }
 
-        for (_currentWaveIndex = 0; _currentWaveIndex < waves.Count; _currentWaveIndex++)
+        for (_currentWaveIndex = 0; endlessScaling || _currentWaveIndex < waves.Count; _currentWaveIndex++)
         {
-            WaveDefinition wave = waves[_currentWaveIndex];
+            WaveDefinition wave = BuildWave(_currentWaveIndex);
             if (wave == null)
             {
                 continue;
@@ -92,15 +142,66 @@ public class GameManger : MonoBehaviour
                 yield return new WaitForSeconds(wave.startDelay);
             }
 
+            WaveStarted?.Invoke(_currentWaveIndex);
             yield return SpawnWave(wave);
 
-            if (_currentWaveIndex < waves.Count - 1 && timeBetweenWaves > 0f)
+            bool isLastConfiguredWave = !endlessScaling && _currentWaveIndex >= waves.Count - 1;
+            if (!isLastConfiguredWave && timeBetweenWaves > 0f)
             {
                 yield return new WaitForSeconds(timeBetweenWaves);
             }
         }
 
         _waveRoutine = null;
+        if (autoStartWaves)
+        {
+            BeginAutoStartCountdown();
+        }
+    }
+
+    // Hand-authored waves play as configured. Once they run out, the final wave keeps repeating with
+    // ship counts scaled up exponentially so difficulty keeps climbing indefinitely.
+    private WaveDefinition BuildWave(int index)
+    {
+        if (waves == null || waves.Count == 0)
+        {
+            return null;
+        }
+
+        if (index < waves.Count)
+        {
+            return waves[index];
+        }
+
+        WaveDefinition template = waves[waves.Count - 1];
+        int extraWaves = index - waves.Count + 1;
+        float multiplier = Mathf.Pow(difficultyGrowthPerWave, extraWaves);
+
+        WaveDefinition scaled = new WaveDefinition
+        {
+            waveName = "Wave " + (index + 1),
+            startDelay = template.startDelay,
+            ships = new List<WaveShipEntry>()
+        };
+
+        foreach (WaveShipEntry entry in template.ships)
+        {
+            if (entry == null || entry.ship == null)
+            {
+                continue;
+            }
+
+            scaled.ships.Add(new WaveShipEntry
+            {
+                ship = entry.ship,
+                amount = Mathf.Max(1, Mathf.RoundToInt(entry.amount * multiplier)),
+                spawnInterval = Mathf.Max(.15f, entry.spawnInterval / Mathf.Sqrt(multiplier)),
+                attackChancePercent = Mathf.Min(100f, entry.attackChancePercent * (1f + .02f * extraWaves)),
+                towerAttackChancePercent = entry.towerAttackChancePercent
+            });
+        }
+
+        return scaled;
     }
 
     private IEnumerator SpawnWave(WaveDefinition wave)

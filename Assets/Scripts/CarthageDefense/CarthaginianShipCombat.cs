@@ -15,6 +15,11 @@ public class CarthaginianShipCombat : MonoBehaviour
     [SerializeField, Min(0.1f)] private float longRangeAttackRange = 20f;
     [SerializeField, Min(0.1f)] private float attackDamage = 2f;
     [SerializeField, Min(0.05f)] private float attackCooldown = 1f;
+    [Tooltip("Deals 1.5x damage to the class it counters (Warship > Skirmisher > Heavy > Warship).")]
+    [SerializeField] private ShipCombatClass combatClass = ShipCombatClass.Warship;
+    [Header("Separation")]
+    [SerializeField, Min(0f)] private float separationRadius = 3.5f;
+    [SerializeField, Min(0f)] private float separationStrength = 1.5f;
 
     private Vector3 _homePosition;
     private Vector3 _waypoint;
@@ -28,6 +33,7 @@ public class CarthaginianShipCombat : MonoBehaviour
     public bool HasLongRangeAttack => hasLongRangeAttack;
     public float AttackDamage => attackDamage;
     public float AttackCooldown => attackCooldown;
+    public ShipCombatClass CombatClass => combatClass;
 
     private void Awake()
     {
@@ -62,13 +68,53 @@ public class CarthaginianShipCombat : MonoBehaviour
         Vector3 targetPosition = _target.transform.position;
         if (Vector3.Distance(transform.position, targetPosition) > attackRange)
         {
-            SailTowards(targetPosition);
+            Vector3 movePoint = targetPosition + ComputeSeparation() * separationStrength;
+            transform.position = Vector3.MoveTowards(transform.position, movePoint, sailSpeed * Time.deltaTime);
+            Face(targetPosition);
             return;
         }
         Face(targetPosition);
         if (Time.time < _nextAttackTime) return;
         _nextAttackTime = Time.time + attackCooldown;
-        _target.TakeDamage(attackDamage * _crew.DamageMultiplier);
+        float damage = attackDamage * _crew.DamageMultiplier * GetCounterMultiplier();
+        _target.TakeDamage(damage);
+        FloatingCombatText.Spawn(targetPosition, "-" + Mathf.CeilToInt(damage), new Color(1f, .82f, .25f));
+    }
+
+    private float GetCounterMultiplier()
+    {
+        RomanShip targetShip = _target != null ? _target.GetComponent<RomanShip>() : null;
+        return targetShip != null && targetShip.shipData != null
+            ? ShipCounterTable.GetDamageMultiplier(combatClass, targetShip.shipData.combatClass)
+            : 1f;
+    }
+
+    // Keeps ships from converging onto the exact same point when several of them close on one target.
+    private Vector3 ComputeSeparation()
+    {
+        Vector3 push = Vector3.zero;
+        foreach (CarthaginianShipCombat other in FindObjectsByType<CarthaginianShipCombat>(FindObjectsSortMode.None))
+        {
+            if (other == this) continue;
+            push += SeparationFrom(other.transform.position);
+        }
+
+        foreach (RomanShipHealth other in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
+        {
+            if (other.IsDestroyed) continue;
+            push += SeparationFrom(other.transform.position);
+        }
+
+        return push;
+    }
+
+    private Vector3 SeparationFrom(Vector3 otherPosition)
+    {
+        Vector3 offset = transform.position - otherPosition;
+        offset.y = 0f;
+        float distance = offset.magnitude;
+        if (distance <= 0.001f || distance >= separationRadius) return Vector3.zero;
+        return offset.normalized * (separationRadius - distance);
     }
 
     private void Patrol()

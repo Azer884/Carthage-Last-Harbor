@@ -184,6 +184,7 @@ MonoBehaviour:
   longRangeAttackRange: 0.1
   attackDamage: 2
   attackCooldown: 1
+  combatClass: 0
 --- !u!114 &2481536133556921860
 MonoBehaviour:
   m_ObjectHideFlags: 0

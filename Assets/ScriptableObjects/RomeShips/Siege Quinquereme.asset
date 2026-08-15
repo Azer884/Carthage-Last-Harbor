@@ -16,6 +16,7 @@ MonoBehaviour:
   shipDescription: A massive Roman flagship equipped with siege weapons that bombard
     the harbor from afar.
   mesh: {fileID: 0}
+  combatClass: 1
   crewSize: 60
   bounty: 35
   attackPower: 10

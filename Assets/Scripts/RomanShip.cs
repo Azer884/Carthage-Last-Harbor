@@ -6,6 +6,10 @@ public class RomanShip : MonoBehaviour
 {
     public RomeShip shipData;
 
+    [Header("Separation")]
+    [SerializeField, Min(0f)] private float separationRadius = 3.5f;
+    [SerializeField, Min(0f)] private float separationStrength = 1.5f;
+
     private Mesh _mesh;
     private float _speed;
 
@@ -182,7 +186,8 @@ public class RomanShip : MonoBehaviour
 
         if (distance > attackRange)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, _speed * Time.deltaTime);
+            Vector3 movePoint = targetPosition + ComputeSeparation() * separationStrength;
+            transform.position = Vector3.MoveTowards(transform.position, movePoint, _speed * Time.deltaTime);
             Face(targetPosition);
             return;
         }
@@ -192,7 +197,44 @@ public class RomanShip : MonoBehaviour
             return;
 
         _nextAttackTime = Time.time + shipData.attackCooldown;
-        _target.TakeDamage(shipData.attackPower);
+        float damage = shipData.attackPower * GetCounterMultiplier();
+        _target.TakeDamage(damage);
+        FloatingCombatText.Spawn(targetPosition, "-" + Mathf.CeilToInt(damage), new Color(1f, .82f, .25f));
+    }
+
+    private float GetCounterMultiplier()
+    {
+        CarthaginianShipCombat targetCombat = _target != null && _target.TargetTransform != null
+            ? _target.TargetTransform.GetComponent<CarthaginianShipCombat>() : null;
+        return targetCombat != null ? ShipCounterTable.GetDamageMultiplier(shipData.combatClass, targetCombat.CombatClass) : 1f;
+    }
+
+    // Keeps ships from converging onto the exact same point when several of them close on one target.
+    private Vector3 ComputeSeparation()
+    {
+        Vector3 push = Vector3.zero;
+        foreach (RomanShip other in FindObjectsByType<RomanShip>(FindObjectsSortMode.None))
+        {
+            if (other == this) continue;
+            push += SeparationFrom(other.transform.position);
+        }
+
+        foreach (CarthaginianShipCrew other in FindObjectsByType<CarthaginianShipCrew>(FindObjectsSortMode.None))
+        {
+            if (other.IsDestroyed) continue;
+            push += SeparationFrom(other.transform.position);
+        }
+
+        return push;
+    }
+
+    private Vector3 SeparationFrom(Vector3 otherPosition)
+    {
+        Vector3 offset = transform.position - otherPosition;
+        offset.y = 0f;
+        float distance = offset.magnitude;
+        if (distance <= 0.001f || distance >= separationRadius) return Vector3.zero;
+        return offset.normalized * (separationRadius - distance);
     }
 
     private void ReturnToSpline()

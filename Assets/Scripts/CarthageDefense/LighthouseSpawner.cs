@@ -48,6 +48,13 @@ public class LighthouseSpawner : MonoBehaviour
         GameObject ship = Instantiate(option.shipPrefab, point.position, point.rotation);
         CarthaginianShipCrew shipCrew = ship.GetComponent<CarthaginianShipCrew>();
         if (shipCrew != null) shipCrew.AssignCrew(crew);
+        SpawnPopEffect.Apply(ship);
+        SfxManager.Instance?.PlayShipSpawned();
+        if (option.shipCost > 0)
+        {
+            FloatingCombatText.Spawn(point.position, "-" + option.shipCost, new Color(1f, .35f, .3f));
+            SfxManager.Instance?.PlayCoinSpent();
+        }
         return true;
     }
 }

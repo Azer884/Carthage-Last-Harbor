@@ -7,7 +7,9 @@ public class RomeShip : ScriptableObject
     public string shipName;
     public string shipDescription;
     public Mesh mesh;
-    
+    [Tooltip("Deals 1.5x damage to the class it counters (Warship > Skirmisher > Heavy > Warship).")]
+    public ShipCombatClass combatClass = ShipCombatClass.Warship;
+
     public int crewSize;
     [Min(0)] public int bounty = 10;
     public float attackPower;

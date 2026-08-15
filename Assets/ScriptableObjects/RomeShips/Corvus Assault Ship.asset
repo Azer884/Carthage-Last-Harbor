@@ -16,6 +16,7 @@ MonoBehaviour:
   shipDescription: Carries the famous boarding bridge. Tougher and capable of dealing
     heavy damage to harbor defenses.
   mesh: {fileID: 0}
+  combatClass: 2
   crewSize: 40
   bounty: 20
   attackPower: 6

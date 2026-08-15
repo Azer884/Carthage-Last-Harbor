@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -13,12 +14,15 @@ public class TowerSelectionManager : MonoBehaviour
     private Outline _selectedOutline;
     private Outline _hoverOutline;
     private GameObject _panel;
-    private Text _title;
-    private Text _details;
+    private TextMeshProUGUI _title;
+    private TextMeshProUGUI _details;
     private Button _upgrade;
-    private Text _upgradeText;
-    private Text _upgradeHint;
-    private Font _font;
+    private TextMeshProUGUI _upgradeText;
+    private TextMeshProUGUI _upgradeHint;
+    private Button _sell;
+    private Button[] _trainButtons;
+    private TextMeshProUGUI[] _trainButtonTexts;
+    private TMP_InputField[] _trainInputs;
 
     public static TowerSelectionManager Ensure()
     {
@@ -31,7 +35,6 @@ public class TowerSelectionManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         _placement = FindFirstObjectByType<TowerPlacementController>();
-        _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         CreatePanel();
     }
 
@@ -40,6 +43,8 @@ public class TowerSelectionManager : MonoBehaviour
         // Also supports towers that were already placed in the scene before this manager existed.
         foreach (CarthaginianTower tower in FindObjectsByType<CarthaginianTower>(FindObjectsSortMode.None)) EnsureSelectableCollider(tower.gameObject);
         foreach (CarthaginianResourceTower resource in FindObjectsByType<CarthaginianResourceTower>(FindObjectsSortMode.None)) EnsureSelectableCollider(resource.gameObject);
+        foreach (JemColosseum jem in FindObjectsByType<JemColosseum>(FindObjectsSortMode.None)) EnsureSelectableCollider(jem.gameObject);
+        foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None)) EnsureSelectableCollider(heart.gameObject);
         SetAllSelectableOutlines(false);
     }
 
@@ -59,8 +64,8 @@ public class TowerSelectionManager : MonoBehaviour
 
     private void Update()
     {
-        if (_selected != null) RefreshPanel();
-        else HidePanel();
+        if (_selected != null && _selected.GetComponent<CartageHeart>() == null) RefreshPanel();
+        else if (_selected == null) HidePanel();
         if (Mouse.current == null || (_placement != null && _placement.IsPlacing)) { SetHover(null); return; }
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) { SetHover(null); return; }
         Camera camera = Camera.main;
@@ -87,12 +92,15 @@ public class TowerSelectionManager : MonoBehaviour
 
     public void Select(GameObject building)
     {
-        if (building == null || (building.GetComponent<CarthaginianTower>() == null && building.GetComponent<CarthaginianResourceTower>() == null)) return;
+        if (building == null) return;
+        bool isHeart = building.GetComponent<CartageHeart>() != null;
+        if (!isHeart && building.GetComponent<CarthaginianTower>() == null && building.GetComponent<CarthaginianResourceTower>() == null && building.GetComponent<JemColosseum>() == null) return;
         if (_selected == building) return;
         Deselect();
         _selected = building;
         _selectedOutline = building.GetComponentInChildren<Outline>(true);
         if (_selectedOutline != null) _selectedOutline.enabled = true;
+        if (isHeart) { MercenaryMarketUI.Ensure().Show(); return; }
         _panel.SetActive(true);
         RefreshPanel();
     }
@@ -100,6 +108,7 @@ public class TowerSelectionManager : MonoBehaviour
     public void Deselect()
     {
         if (_selectedOutline != null) _selectedOutline.enabled = false;
+        if (_selected != null && _selected.GetComponent<CartageHeart>() != null) MercenaryMarketUI.Instance?.Hide();
         _selected = null; _selectedOutline = null;
         HidePanel();
     }
@@ -110,7 +119,11 @@ public class TowerSelectionManager : MonoBehaviour
         CarthaginianTower tower = collider.GetComponentInParent<CarthaginianTower>();
         if (tower != null) return tower.gameObject;
         CarthaginianResourceTower resource = collider.GetComponentInParent<CarthaginianResourceTower>();
-        return resource != null ? resource.gameObject : null;
+        if (resource != null) return resource.gameObject;
+        JemColosseum jem = collider.GetComponentInParent<JemColosseum>();
+        if (jem != null) return jem.gameObject;
+        CartageHeart heart = collider.GetComponentInParent<CartageHeart>();
+        return heart != null ? heart.gameObject : null;
     }
 
     private void SetHover(GameObject building)
@@ -128,6 +141,10 @@ public class TowerSelectionManager : MonoBehaviour
             foreach (Outline outline in tower.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
         foreach (CarthaginianResourceTower resource in FindObjectsByType<CarthaginianResourceTower>(FindObjectsSortMode.None))
             foreach (Outline outline in resource.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
+        foreach (JemColosseum jem in FindObjectsByType<JemColosseum>(FindObjectsSortMode.None))
+            foreach (Outline outline in jem.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
+        foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None))
+            foreach (Outline outline in heart.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
     }
 
     private GameObject FindBuildingNearScreenPoint(Camera camera, Vector2 screenPoint)
@@ -138,6 +155,10 @@ public class TowerSelectionManager : MonoBehaviour
             ConsiderVisibleBuilding(tower.gameObject, camera, screenPoint, ref closest, ref closestPixels);
         foreach (CarthaginianResourceTower resource in FindObjectsByType<CarthaginianResourceTower>(FindObjectsSortMode.None))
             ConsiderVisibleBuilding(resource.gameObject, camera, screenPoint, ref closest, ref closestPixels);
+        foreach (JemColosseum jem in FindObjectsByType<JemColosseum>(FindObjectsSortMode.None))
+            ConsiderVisibleBuilding(jem.gameObject, camera, screenPoint, ref closest, ref closestPixels);
+        foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None))
+            ConsiderVisibleBuilding(heart.gameObject, camera, screenPoint, ref closest, ref closestPixels);
         return closest;
     }
 
@@ -179,30 +200,135 @@ public class TowerSelectionManager : MonoBehaviour
         RectTransform rect = panel.GetComponent<RectTransform>(); rect.anchorMin = new Vector2(.72f, .25f); rect.anchorMax = new Vector2(.98f, .75f); rect.offsetMin = rect.offsetMax = Vector2.zero;
         _panel = panel;
         _title = CreateText(panel.transform, 23, TextAnchor.UpperCenter, new Vector2(.06f, .79f), new Vector2(.94f, .95f));
-        _details = CreateText(panel.transform, 17, TextAnchor.UpperLeft, new Vector2(.08f, .28f), new Vector2(.92f, .78f));
+        _details = CreateScrollableText(panel.transform, new Vector2(.06f, .28f), new Vector2(.94f, .78f));
         _upgradeHint = CreateText(panel.transform, 13, TextAnchor.MiddleCenter, new Vector2(.08f, .255f), new Vector2(.92f, .29f));
         _upgradeHint.color = new Color(1f, .85f, .35f, 1f);
         Button close = CreateButton(panel.transform, new Vector2(.82f, .87f), new Vector2(.94f, .95f));
         close.GetComponent<Image>().color = new Color(.38f, .12f, .1f, 1f);
-        close.GetComponentInChildren<Text>().text = "X";
+        close.GetComponentInChildren<TextMeshProUGUI>().text = "X";
         close.onClick.AddListener(Deselect);
         _upgrade = CreateButton(panel.transform, new Vector2(.08f, .15f), new Vector2(.92f, .25f));
-        _upgradeText = _upgrade.GetComponentInChildren<Text>();
+        _upgradeText = _upgrade.GetComponentInChildren<TextMeshProUGUI>();
         _upgrade.onClick.AddListener(UpgradeSelected);
         UpgradeRequirementHover upgradeHover = _upgrade.gameObject.AddComponent<UpgradeRequirementHover>();
         upgradeHover.Initialize(this);
-        Button sell = CreateButton(panel.transform, new Vector2(.08f, .04f), new Vector2(.92f, .13f));
-        sell.GetComponent<Image>().color = new Color(.5f, .14f, .10f, 1f);
-        sell.GetComponentInChildren<Text>().text = "SELL";
-        sell.onClick.AddListener(SellSelected);
+        _sell = CreateButton(panel.transform, new Vector2(.08f, .04f), new Vector2(.92f, .13f));
+        _sell.GetComponent<Image>().color = new Color(.5f, .14f, .10f, 1f);
+        _sell.GetComponentInChildren<TextMeshProUGUI>().text = "SELL";
+        _sell.onClick.AddListener(SellSelected);
+
+        _trainButtons = new Button[3];
+        _trainButtonTexts = new TextMeshProUGUI[3];
+        _trainInputs = new TMP_InputField[3];
+        for (int i = 0; i < _trainButtons.Length; i++)
+        {
+            float xMin = .08f + i * .29f;
+            float xMax = xMin + .26f;
+            TMP_InputField trainInput = CreateInputField(panel.transform, new Vector2(xMin, .255f), new Vector2(xMax, .305f));
+            Button trainButton = CreateButton(panel.transform, new Vector2(xMin, .15f), new Vector2(xMax, .245f));
+            TextMeshProUGUI trainText = trainButton.GetComponentInChildren<TextMeshProUGUI>();
+            trainText.fontSize = 12;
+            CrewRank rank = (CrewRank)i;
+            int index = i;
+            trainButton.onClick.AddListener(() => TrainSelected(rank, index));
+            trainButton.gameObject.SetActive(false);
+            trainInput.gameObject.SetActive(false);
+            _trainButtons[i] = trainButton;
+            _trainButtonTexts[i] = trainText;
+            _trainInputs[i] = trainInput;
+        }
+
         _panel.SetActive(false);
     }
 
-    private Text CreateText(Transform parent, int size, TextAnchor anchor, Vector2 min, Vector2 max)
+    private TMP_InputField CreateInputField(Transform parent, Vector2 min, Vector2 max)
     {
-        GameObject obj = new GameObject("Text", typeof(Text)); obj.transform.SetParent(parent, false);
-        Text text = obj.GetComponent<Text>(); text.font = _font; text.fontSize = size; text.color = Color.white; text.alignment = anchor; text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Overflow;
+        GameObject obj = new GameObject("Quantity Input", typeof(Image), typeof(TMP_InputField));
+        obj.transform.SetParent(parent, false);
+        obj.GetComponent<Image>().color = new Color(1f, 1f, 1f, .15f);
+        RectTransform rect = obj.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+        GameObject textObject = new GameObject("Text", typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(obj.transform, false);
+        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
+        text.fontSize = 13; text.alignment = TextAlignmentOptions.Center; text.color = Color.white;
+        RectTransform textRect = text.rectTransform; textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one; textRect.offsetMin = new Vector2(4f, 1f); textRect.offsetMax = new Vector2(-4f, -1f);
+
+        TMP_InputField field = obj.GetComponent<TMP_InputField>();
+        field.textViewport = rect;
+        field.textComponent = text;
+        field.contentType = TMP_InputField.ContentType.IntegerNumber;
+        field.text = "1";
+        return field;
+    }
+
+    private TextMeshProUGUI CreateText(Transform parent, int size, TextAnchor anchor, Vector2 min, Vector2 max)
+    {
+        GameObject obj = new GameObject("Text", typeof(TextMeshProUGUI)); obj.transform.SetParent(parent, false);
+        TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
+        text.fontSize = size; text.color = Color.white; text.alignment = TmpTextUtility.ToTmpAlignment(anchor);
+        text.enableWordWrapping = true; text.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = text.rectTransform; rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
+        return text;
+    }
+
+    // Long ship/level descriptions no longer overflow the fixed-size panel — this wraps the details
+    // text in a masked, draggable ScrollRect with a visible handle.
+    private TextMeshProUGUI CreateScrollableText(Transform parent, Vector2 min, Vector2 max)
+    {
+        GameObject scrollObject = new GameObject("Details Scroll", typeof(Image), typeof(ScrollRect));
+        scrollObject.transform.SetParent(parent, false);
+        scrollObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, .12f);
+        RectTransform scrollRectTransform = scrollObject.GetComponent<RectTransform>();
+        scrollRectTransform.anchorMin = min; scrollRectTransform.anchorMax = max; scrollRectTransform.offsetMin = scrollRectTransform.offsetMax = Vector2.zero;
+
+        GameObject viewportObject = new GameObject("Viewport", typeof(Image), typeof(Mask));
+        viewportObject.transform.SetParent(scrollObject.transform, false);
+        viewportObject.GetComponent<Image>().color = Color.white;
+        viewportObject.GetComponent<Mask>().showMaskGraphic = false;
+        RectTransform viewportRect = viewportObject.GetComponent<RectTransform>();
+        viewportRect.anchorMin = Vector2.zero; viewportRect.anchorMax = new Vector2(.93f, 1f); viewportRect.offsetMin = viewportRect.offsetMax = Vector2.zero;
+
+        GameObject contentObject = new GameObject("Content", typeof(TextMeshProUGUI), typeof(ContentSizeFitter));
+        contentObject.transform.SetParent(viewportObject.transform, false);
+        TextMeshProUGUI text = contentObject.GetComponent<TextMeshProUGUI>();
+        text.fontSize = 17; text.color = Color.white; text.alignment = TextAlignmentOptions.TopLeft;
+        text.enableWordWrapping = true; text.overflowMode = TextOverflowModes.Overflow;
+        RectTransform contentRect = contentObject.GetComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0f, 1f); contentRect.anchorMax = new Vector2(1f, 1f); contentRect.pivot = new Vector2(.5f, 1f);
+        contentRect.offsetMin = new Vector2(4f, 0f); contentRect.offsetMax = new Vector2(-4f, 0f);
+        contentObject.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        GameObject scrollbarObject = new GameObject("Scrollbar", typeof(Image), typeof(Scrollbar));
+        scrollbarObject.transform.SetParent(scrollObject.transform, false);
+        scrollbarObject.GetComponent<Image>().color = new Color(1f, 1f, 1f, .1f);
+        RectTransform scrollbarRect = scrollbarObject.GetComponent<RectTransform>();
+        scrollbarRect.anchorMin = new Vector2(.95f, 0f); scrollbarRect.anchorMax = new Vector2(1f, 1f); scrollbarRect.offsetMin = scrollbarRect.offsetMax = Vector2.zero;
+        Scrollbar scrollbar = scrollbarObject.GetComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+
+        GameObject handleAreaObject = new GameObject("Sliding Area", typeof(RectTransform));
+        handleAreaObject.transform.SetParent(scrollbarObject.transform, false);
+        RectTransform handleAreaRect = handleAreaObject.GetComponent<RectTransform>();
+        handleAreaRect.anchorMin = Vector2.zero; handleAreaRect.anchorMax = Vector2.one; handleAreaRect.offsetMin = new Vector2(2f, 2f); handleAreaRect.offsetMax = new Vector2(-2f, -2f);
+
+        GameObject handleObject = new GameObject("Handle", typeof(Image));
+        handleObject.transform.SetParent(handleAreaObject.transform, false);
+        Image handleImage = handleObject.GetComponent<Image>();
+        handleImage.color = new Color(1f, .85f, .35f, .85f);
+        RectTransform handleRect = handleObject.GetComponent<RectTransform>();
+        handleRect.anchorMin = Vector2.zero; handleRect.anchorMax = new Vector2(1f, .3f); handleRect.offsetMin = handleRect.offsetMax = Vector2.zero;
+        scrollbar.handleRect = handleRect; scrollbar.targetGraphic = handleImage;
+
+        ScrollRect scrollRect = scrollObject.GetComponent<ScrollRect>();
+        scrollRect.content = contentRect;
+        scrollRect.viewport = viewportRect;
+        scrollRect.verticalScrollbar = scrollbar;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+
         return text;
     }
 
@@ -211,27 +337,62 @@ public class TowerSelectionManager : MonoBehaviour
         GameObject obj = new GameObject("Button", typeof(Image), typeof(Button)); obj.transform.SetParent(parent, false);
         obj.GetComponent<Image>().color = new Color(.14f, .35f, .16f, 1f);
         RectTransform rect = obj.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
-        Text text = CreateText(obj.transform, 16, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one); text.text = "UPGRADE";
+        TextMeshProUGUI text = CreateText(obj.transform, 16, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one); text.text = "UPGRADE";
         return obj.GetComponent<Button>();
+    }
+
+    // gameObject.SetActive() is a no-op when the value isn't changing, but this panel refreshes every
+    // frame — an unconditional SetActive(false) followed by SetActive(true) on the same object within
+    // one call genuinely disables and re-enables it, which clears EventSystem focus. That was kicking
+    // the player out of the train quantity InputField on every frame, mid-keystroke.
+    private void SetActiveSafe(GameObject target, bool active)
+    {
+        if (target.activeSelf != active) target.SetActive(active);
     }
 
     private void RefreshPanel()
     {
         if (_selected == null || _panel == null) return;
+        SetActiveSafe(_sell.gameObject, true);
+        foreach (Button trainButton in _trainButtons) SetActiveSafe(trainButton.gameObject, false);
+        foreach (TMP_InputField trainInput in _trainInputs) SetActiveSafe(trainInput.gameObject, false);
         CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
         if (tower != null)
         {
             CarthaginianTowerDefinition definition = tower.Definition;
             _title.text = definition != null ? definition.towerName : _selected.name;
             _details.text = (definition != null ? definition.description : string.Empty) + "\n\nLevel: " + (tower.CurrentLevel + 1) + (definition != null && definition.levels != null ? " / " + definition.levels.Length : string.Empty)
-                + "\n" + GetTowerStats(tower) + "\nSell value: " + GetSellValue() + " coin";
-            _upgrade.gameObject.SetActive(tower.CanUpgrade);
+                + "\n" + GetTowerStats(tower) + (tower.Sellable ? "\nSell value: " + GetSellValue() + " coin" : string.Empty);
+            SetActiveSafe(_upgrade.gameObject, tower.CanUpgrade);
             if (tower.CanUpgrade)
             {
                 _upgradeText.text = "UPGRADE — " + tower.NextUpgradeCost + " coin";
                 _upgrade.interactable = tower.CanAffordUpgrade;
             }
             _upgradeHint.text = string.Empty;
+            SetActiveSafe(_sell.gameObject, tower.Sellable);
+            return;
+        }
+        JemColosseum jem = _selected.GetComponent<JemColosseum>();
+        if (jem != null)
+        {
+            _title.text = "El Jem Colosseum";
+            System.Text.StringBuilder details = new System.Text.StringBuilder("Trains crew into the next rank.\n");
+            for (int i = 0; i < _trainButtons.Length; i++)
+            {
+                CrewRank rank = (CrewRank)i;
+                int available = CrewRoster.Instance != null ? CrewRoster.Instance.GetAvailable(rank) : 0;
+                details.Append("\n").Append(rank).Append(" → ").Append(rank + 1).Append(": ").Append(jem.TraineesPerPromotion).Append(" crew + ")
+                    .Append(jem.GetTrainingCost(rank)).Append(" coin (").Append(available).Append(" available)");
+                SetActiveSafe(_trainButtons[i].gameObject, true);
+                SetActiveSafe(_trainInputs[i].gameObject, true);
+                _trainButtons[i].interactable = jem.CanTrain(rank);
+                _trainButtonTexts[i].text = "TRAIN " + rank + "\n" + jem.GetTrainingCost(rank) + " coin ea.";
+            }
+            _details.text = details.ToString();
+            SetActiveSafe(_upgrade.gameObject, false);
+            _upgradeHint.text = string.Empty;
+            SetActiveSafe(_sell.gameObject, false);
             return;
         }
         CarthaginianResourceTower resource = _selected.GetComponent<CarthaginianResourceTower>();
@@ -241,7 +402,7 @@ public class TowerSelectionManager : MonoBehaviour
             + "\n\nWorkers: " + (resourceDefinition != null ? resourceDefinition.workersRequired : 0)
             + "\nIncome: " + (resourceDefinition != null ? resourceDefinition.unitsPerCycle + " " + resourceDefinition.resource + " / " + resourceDefinition.productionCycleSeconds + " sec" : "")
             + "\nSell value: " + GetSellValue() + " coin";
-        _upgrade.gameObject.SetActive(false);
+        SetActiveSafe(_upgrade.gameObject, false);
         _upgradeHint.text = string.Empty;
     }
 
@@ -253,6 +414,8 @@ public class TowerSelectionManager : MonoBehaviour
             StationaryTowerLevel stats = stationary.ActiveStats;
             return "Damage: " + stats.damage + "\nSight range: " + stats.sightRange + "\nAttack range: " + stats.attackRange + "\nAttack cooldown: " + stats.attackCooldown + " sec";
         }
+        SidiBouSaidTower sidiBouSaid = tower.GetComponent<SidiBouSaidTower>();
+        if (sidiBouSaid != null) return "Generates " + sidiBouSaid.CrewPerSecond.ToString("0.00") + " crew/sec";
         TowerLevel level = tower.ActiveLevel;
         if (level == null || level.unlockedShips == null || level.unlockedShips.Length == 0) return "No ships unlocked.";
         System.Text.StringBuilder output = new System.Text.StringBuilder("Available ships:");
@@ -263,7 +426,11 @@ public class TowerSelectionManager : MonoBehaviour
             output.Append("\n• ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin ").Append(affordable ? "[READY]" : "[NEED COIN]")
                 .Append("\n  ").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+, ").Append(ship.spawnCooldown).Append(" sec spawn");
             CarthaginianShipCombat combat = ship.shipPrefab != null ? ship.shipPrefab.GetComponent<CarthaginianShipCombat>() : null;
-            if (combat != null) output.Append("\n  DMG ").Append(combat.AttackDamage).Append(" | sight ").Append(combat.SightRange).Append(" | range ").Append(combat.AttackRange).Append(" | ").Append(combat.AttackCooldown).Append(" sec");
+            if (combat != null)
+            {
+                output.Append("\n  DMG ").Append(combat.AttackDamage).Append(" | sight ").Append(combat.SightRange).Append(" | range ").Append(combat.AttackRange).Append(" | ").Append(combat.AttackCooldown).Append(" sec");
+                output.Append("\n  ").Append(ShipCounterTable.Describe(combat.CombatClass));
+            }
         }
         return output.ToString();
     }
@@ -277,6 +444,14 @@ public class TowerSelectionManager : MonoBehaviour
     }
 
     private void UpgradeSelected() { if (_selected != null) _selected.GetComponent<CarthaginianTower>()?.TryUpgrade(); }
+    private void TrainSelected(CrewRank rank, int inputIndex)
+    {
+        if (_selected == null) return;
+        JemColosseum jem = _selected.GetComponent<JemColosseum>();
+        if (jem == null) return;
+        if (!int.TryParse(_trainInputs[inputIndex].text, out int count)) count = 1;
+        jem.TrainCount(rank, Mathf.Max(1, count));
+    }
     public void ShowUpgradeRequirement()
     {
         CarthaginianTower tower = _selected != null ? _selected.GetComponent<CarthaginianTower>() : null;
@@ -292,6 +467,9 @@ public class TowerSelectionManager : MonoBehaviour
     private void SellSelected()
     {
         if (_selected == null) return;
+        CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
+        if (tower != null && !tower.Sellable) return;
+        if (_selected.GetComponent<JemColosseum>() != null) return;
         CarthaginianResourceTower resource = _selected.GetComponent<CarthaginianResourceTower>();
         if (resource != null) resource.SellStoredResources();
         if (EconomyManager.Instance != null) EconomyManager.Instance.AddMoney(GetSellValue());

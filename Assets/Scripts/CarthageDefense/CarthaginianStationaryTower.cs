@@ -27,6 +27,7 @@ public class CarthaginianStationaryTower : MonoBehaviour
         if (Vector3.Distance(transform.position, _target.transform.position) > stats.attackRange || Time.time < _nextAttackTime) return;
         _nextAttackTime = Time.time + stats.attackCooldown;
         _target.TakeDamage(stats.damage);
+        FloatingCombatText.Spawn(_target.transform.position, "-" + Mathf.CeilToInt(stats.damage), new Color(1f, .82f, .25f));
     }
 
     private RomanShipHealth FindTarget(float range)

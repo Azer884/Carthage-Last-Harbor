@@ -35,6 +35,13 @@ public class TowerPlacementController : MonoBehaviour
         CarthaginianResourceTower resourceTower = building.GetComponent<CarthaginianResourceTower>();
         if (resourceTower != null) resourceTower.Initialize(definition);
         TowerSelectionManager.Ensure().Select(building);
+        SpawnPopEffect.Apply(building);
+        SfxManager.Instance?.PlayTowerPlaced();
+        if (definition.buildCost > 0)
+        {
+            FloatingCombatText.Spawn(position, "-" + definition.buildCost, new Color(1f, .35f, .3f));
+            SfxManager.Instance?.PlayCoinSpent();
+        }
         return true;
     }
 
@@ -64,6 +71,13 @@ public class TowerPlacementController : MonoBehaviour
         CarthaginianTower runtimeTower = tower.GetComponent<CarthaginianTower>();
         if (runtimeTower != null) runtimeTower.Initialize(definition);
         TowerSelectionManager.Ensure().Select(tower);
+        SpawnPopEffect.Apply(tower);
+        SfxManager.Instance?.PlayTowerPlaced();
+        if (definition.buildCost > 0)
+        {
+            FloatingCombatText.Spawn(position, "-" + definition.buildCost, new Color(1f, .35f, .3f));
+            SfxManager.Instance?.PlayCoinSpent();
+        }
         return true;
     }
 
@@ -71,12 +85,9 @@ public class TowerPlacementController : MonoBehaviour
     {
         // This also protects calls to TryPlace made from UI/buttons rather than the mouse path above.
         if (!Physics.CheckSphere(position, 0.15f, seaMask, QueryTriggerInteraction.Ignore)) return false;
+        if (IsCoveredByLand(position)) return false;
         if (IsNearEnemyPath(position)) return false;
-        if (Physics.CheckSphere(position, towerSpacing, ~enemyPathMask, QueryTriggerInteraction.Ignore))
-        {
-            foreach (Collider hit in Physics.OverlapSphere(position, towerSpacing, ~enemyPathMask, QueryTriggerInteraction.Ignore))
-                if (hit.GetComponentInParent<CarthaginianTower>() != null) return false;
-        }
+        if (IsObstructed(position)) return false;
         if (string.IsNullOrEmpty(definition.requiredZoneId)) return true;
         foreach (TowerPlacementZone zone in FindObjectsByType<TowerPlacementZone>(FindObjectsSortMode.None))
             if (zone.ZoneId == definition.requiredZoneId && zone.Contains(position)) return true;
@@ -87,9 +98,9 @@ public class TowerPlacementController : MonoBehaviour
     {
         LayerMask environmentMask = definition.environment == ResourceEnvironment.Sea ? seaMask : landMask;
         if (!Physics.CheckSphere(position, 0.15f, environmentMask, QueryTriggerInteraction.Ignore)) return false;
+        if (definition.environment == ResourceEnvironment.Sea && IsCoveredByLand(position)) return false;
         if (IsNearEnemyPath(position)) return false;
-        foreach (Collider hit in Physics.OverlapSphere(position, towerSpacing, ~enemyPathMask, QueryTriggerInteraction.Ignore))
-            if (hit.GetComponentInParent<CarthaginianTower>() != null || hit.GetComponentInParent<CarthaginianResourceTower>() != null) return false;
+        if (IsObstructed(position)) return false;
         if (string.IsNullOrEmpty(definition.requiredZoneId)) return true;
         foreach (TowerPlacementZone zone in FindObjectsByType<TowerPlacementZone>(FindObjectsSortMode.None))
             if (zone.ZoneId == definition.requiredZoneId && zone.Contains(position)) return true;
@@ -102,6 +113,23 @@ public class TowerPlacementController : MonoBehaviour
         foreach (EnemyPathPlacementBlocker blocker in FindObjectsByType<EnemyPathPlacementBlocker>(FindObjectsSortMode.None))
             if (blocker.IsBlocked(position, pathClearance)) return true;
         return false;
+    }
+
+    // A sea/land collider directly under the cursor doesn't mean the point is clear — land geometry
+    // can sit above a sea collider (e.g. a cove floor), which would otherwise let a sea tower place under land.
+    private bool IsCoveredByLand(Vector3 position)
+    {
+        Vector3 origin = position + Vector3.up * 500f;
+        return Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, landMask, QueryTriggerInteraction.Ignore)
+            && hit.point.y > position.y + 0.05f;
+    }
+
+    // Rejects placement if the tower would touch any solid object (other towers, props, terrain dressing),
+    // not just other Carthaginian buildings.
+    private bool IsObstructed(Vector3 position)
+    {
+        LayerMask obstructionMask = ~(enemyPathMask | seaMask | landMask);
+        return Physics.CheckSphere(position, towerSpacing, obstructionMask, QueryTriggerInteraction.Ignore);
     }
 
     private void CreatePreview(GameObject prefab)

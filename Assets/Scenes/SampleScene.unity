@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7953d6cfeaaa2d547983b92c1a62cfac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
-  startingMoney: 150
+  startingMoney: 15000
 --- !u!4 &11434016
 Transform:
   m_ObjectHideFlags: 0
@@ -409,13 +409,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92c0f09920bf38c4c82a32ee91116e1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CrewRoster
-  sidiBouSaidRecruitInterval: 12
-  sidiBouSaidRecruitsPerArrival: 2
-  boughtMenPerPurchase: 3
-  failedFighterWorkerChance: 0.25
   startingCrew:
   - rank: 0
     amount: 9999
+    isMercenary: 0
 --- !u!4 &375140319
 Transform:
   m_ObjectHideFlags: 0
@@ -803,6 +800,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6841839496841503353, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
       insertIndex: -1
       addedObject: {fileID: 667340787}
+    - targetCorrespondingSourceObject: {fileID: 6841839496841503353, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 667340797}
+    - targetCorrespondingSourceObject: {fileID: 6841839496841503353, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 667340796}
   m_SourcePrefab: {fileID: 100100000, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
 --- !u!1 &667340785 stripped
 GameObject:
@@ -850,6 +853,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CartageHeart
   maxHealth: 35
+  destroyFxPrefab: {fileID: 0}
 --- !u!64 &667340789
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -872,6 +876,53 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -5345760584941703707, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
+--- !u!114 &667340796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667340785}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 0, a: 1}
+  outlineWidth: 4.01
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
+--- !u!114 &667340797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667340785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 721b1898f56940d43a886dc363f6e9b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MercenaryMarket
+  offers:
+  - regionName: Libya
+    troopName: Libyan Levies
+    rank: 0
+    basePrice: 8
+    maxStock: 12
+  - regionName: Iberia
+    troopName: Iberian Mercenaries
+    rank: 1
+    basePrice: 22
+    maxStock: 6
+  - regionName: Gaul
+    troopName: Gallic Mercenaries
+    rank: 2
+    basePrice: 55
+    maxStock: 3
+  rentPriceMultiplier: 1.6
 --- !u!1 &730781650
 GameObject:
   m_ObjectHideFlags: 0
@@ -944,6 +995,117 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 832575517}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &847861923
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 847861925}
+  - component: {fileID: 847861924}
+  m_Layer: 0
+  m_Name: GameManger (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &847861924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847861923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4acc6daf300b10e4a87e11f64fd3a10e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManger
+  paths:
+  - {fileID: 858849870}
+  - {fileID: 1170611278}
+  spawnManager: {fileID: 1228719311}
+  waves:
+  - waveName: Wave 1 - Scouts
+    startDelay: 3
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 6
+      spawnInterval: 1.2
+      attackChancePercent: 100
+      towerAttackChancePercent: 20
+  - waveName: Wave 2 - First Landing
+    startDelay: 4
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 8
+      spawnInterval: 1
+      attackChancePercent: 75
+      towerAttackChancePercent: 25
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 2
+      spawnInterval: 1.5
+      attackChancePercent: 60
+      towerAttackChancePercent: 40
+  - waveName: Wave 3 - Assault Fleet
+    startDelay: 4
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 6
+      spawnInterval: 0.9
+      attackChancePercent: 55
+      towerAttackChancePercent: 30
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 4
+      spawnInterval: 1.3
+      attackChancePercent: 65
+      towerAttackChancePercent: 45
+    - ship: {fileID: 11400000, guid: d8ed877e3e94e5a47842c655ab71dd86, type: 2}
+      amount: 1
+      spawnInterval: 2
+      attackChancePercent: 70
+      towerAttackChancePercent: 50
+  - waveName: Wave 4 - Roman Armada
+    startDelay: 5
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 10
+      spawnInterval: 0.8
+      attackChancePercent: 60
+      towerAttackChancePercent: 35
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 5
+      spawnInterval: 1.2
+      attackChancePercent: 70
+      towerAttackChancePercent: 50
+    - ship: {fileID: 11400000, guid: d8ed877e3e94e5a47842c655ab71dd86, type: 2}
+      amount: 2
+      spawnInterval: 2
+      attackChancePercent: 75
+      towerAttackChancePercent: 55
+  timeBetweenWaves: 3
+  autoStartWaves: 0
+  autoStartDelay: 30
+  endlessScaling: 1
+  difficultyGrowthPerWave: 1.18
+--- !u!4 &847861925
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847861923}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1859,6 +2021,79 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnManager
   shipPrefab: {fileID: 5523474604332321846, guid: df199490b8204b448abbfaf6c452534b, type: 3}
   spawnPoint: {fileID: 730781651}
+--- !u!1 &1274228808
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1274228811}
+  - component: {fileID: 1274228810}
+  - component: {fileID: 1274228809}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1274228809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274228808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cef27ffea0e99a4a860736a50a66839, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxManager
+  towerPlaced: {fileID: 0}
+  placementInvalid: {fileID: 0}
+  shipSpawned: {fileID: 0}
+  shipDestroyed: {fileID: 0}
+  coinGained: {fileID: 0}
+  coinSpent: {fileID: 0}
+  crewTrained: {fileID: 0}
+  waveStart: {fileID: 0}
+  heartDestroyed: {fileID: 0}
+  buttonClick: {fileID: 0}
+  volume: 0.85
+--- !u!114 &1274228810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274228808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a2f0b21d4867e499f1f7353e580527, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  buildMusic: {fileID: 0}
+  waveMusic: {fileID: 0}
+  gameOverMusic: {fileID: 0}
+  volume: 0.5
+  crossfadeDuration: 1.5
+--- !u!4 &1274228811
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274228808}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1495271519
 GameObject:
   m_ObjectHideFlags: 0
@@ -1871,6 +2106,9 @@ GameObject:
   - component: {fileID: 1495271522}
   - component: {fileID: 1495271521}
   - component: {fileID: 1495271520}
+  - component: {fileID: 1495271526}
+  - component: {fileID: 1495271525}
+  - component: {fileID: 1495271524}
   m_Layer: 0
   m_Name: SidiBou
   m_TagString: Untagged
@@ -1971,6 +2209,72 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1495271524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495271519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 253be3d6fbb6ca342835d31a24c12eda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SidiBouSaidTower
+  levels:
+  - title: Level I
+    recruitInterval: 10
+    recruitsPerArrival: 3
+    failedFighterWorkerChance: 0.3
+    model: {fileID: 0}
+  - title: Level II
+    recruitInterval: 8
+    recruitsPerArrival: 3
+    failedFighterWorkerChance: 0.25
+    model: {fileID: 0}
+  - title: Level III
+    recruitInterval: 6
+    recruitsPerArrival: 4
+    failedFighterWorkerChance: 0.2
+    model: {fileID: 0}
+  - title: Level IV
+    recruitInterval: 4
+    recruitsPerArrival: 5
+    failedFighterWorkerChance: 0.15
+    model: {fileID: 0}
+--- !u!114 &1495271525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495271519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 0, a: 1}
+  outlineWidth: 4.01
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
+--- !u!114 &1495271526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495271519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 692fa5af13008e1428cd663ab9da14f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTower
+  definition: {fileID: 11400000, guid: a3f4c8d9e6b34f2ea1c9d6f80b3e5271, type: 2}
+  currentLevel: 0
+  sellable: 1
 --- !u!1 &1752899029
 GameObject:
   m_ObjectHideFlags: 0
@@ -2005,21 +2309,68 @@ MonoBehaviour:
   - {fileID: 1170611278}
   spawnManager: {fileID: 1228719311}
   waves:
-  - waveName: test
+  - waveName: Wave 1 - Scouts
     startDelay: 3
     ships:
     - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
-      amount: 10
-      spawnInterval: 1
+      amount: 6
+      spawnInterval: 1.2
       attackChancePercent: 100
-      towerAttackChancePercent: 21.2
+      towerAttackChancePercent: 20
+  - waveName: Wave 2 - First Landing
+    startDelay: 4
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 8
+      spawnInterval: 1
+      attackChancePercent: 75
+      towerAttackChancePercent: 25
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 2
+      spawnInterval: 1.5
+      attackChancePercent: 60
+      towerAttackChancePercent: 40
+  - waveName: Wave 3 - Assault Fleet
+    startDelay: 4
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 6
+      spawnInterval: 0.9
+      attackChancePercent: 55
+      towerAttackChancePercent: 30
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 4
+      spawnInterval: 1.3
+      attackChancePercent: 65
+      towerAttackChancePercent: 45
     - ship: {fileID: 11400000, guid: d8ed877e3e94e5a47842c655ab71dd86, type: 2}
       amount: 1
-      spawnInterval: 1
-      attackChancePercent: 0
-      towerAttackChancePercent: 0
+      spawnInterval: 2
+      attackChancePercent: 70
+      towerAttackChancePercent: 50
+  - waveName: Wave 4 - Roman Armada
+    startDelay: 5
+    ships:
+    - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
+      amount: 10
+      spawnInterval: 0.8
+      attackChancePercent: 60
+      towerAttackChancePercent: 35
+    - ship: {fileID: 11400000, guid: 7fa9db2be4da9fe4a9c7fad3cbfc6afc, type: 2}
+      amount: 5
+      spawnInterval: 1.2
+      attackChancePercent: 70
+      towerAttackChancePercent: 50
+    - ship: {fileID: 11400000, guid: d8ed877e3e94e5a47842c655ab71dd86, type: 2}
+      amount: 2
+      spawnInterval: 2
+      attackChancePercent: 75
+      towerAttackChancePercent: 55
   timeBetweenWaves: 3
   autoStartWaves: 0
+  autoStartDelay: 30
+  endlessScaling: 1
+  difficultyGrowthPerWave: 1.18
 --- !u!4 &1752899031
 Transform:
   m_ObjectHideFlags: 0
@@ -2303,6 +2654,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 632359af09b27574390e2ad6eb83c369, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2013862465}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 632359af09b27574390e2ad6eb83c369, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2013862467}
   m_SourcePrefab: {fileID: 100100000, guid: 632359af09b27574390e2ad6eb83c369, type: 3}
 --- !u!1 &1915975823
 GameObject:
@@ -2542,6 +2896,20 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &2013862467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2013862462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c6fb233b458bf46a4f76060f3ea171, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JemColosseum
+  traineesPerPromotion: 3
+  trainingCostByRank: 140000002800000050000000
 --- !u!23 &5384926116149002091
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2659,8 +3027,10 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1752899031}
+  - {fileID: 847861925}
   - {fileID: 1228719310}
   - {fileID: 11434016}
+  - {fileID: 1274228811}
   - {fileID: 1961095361}
   - {fileID: 375140319}
   - {fileID: 890684692}

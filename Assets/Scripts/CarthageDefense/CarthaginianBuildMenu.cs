@@ -31,10 +31,15 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private Text _crewText;
     private Text _workerText;
     private Button _startWaveButton;
+    private Text _startWaveLabel;
     private Text _tooltip;
     private GameObject _tooltipPanel;
     private RectTransform _menu;
     private bool _isVisible = true;
+    private bool _wasWaveRunning;
+    private Image _heartFill;
+    private Text _heartText;
+    private Text _timerText;
 
     private void Awake()
     {
@@ -42,6 +47,11 @@ public class CarthaginianBuildMenu : MonoBehaviour
         _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         EnsureEventSystem();
         TowerSelectionManager.Ensure();
+        GameOverController.Ensure();
+        SfxManager.Ensure();
+        MusicManager.Ensure();
+        MercenaryMarket.Ensure();
+        MercenaryMarketUI.Ensure();
         if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
         EnsurePathArrowVisualizer();
         CreateMenu();
@@ -81,13 +91,92 @@ public class CarthaginianBuildMenu : MonoBehaviour
         CreateSection(menu, "CORE DEFENSE", defenseTowers, defenseColor, 1);
         CreateResourceSection(menu, "RESOURCES", resourceTowers, resourceColor, 0);
         CreateStatusBar(root.transform);
+        CreateTimerPanel(root.transform);
+        CreateHealthBarPanel(root.transform);
         CreateTooltip(root.transform);
         CreateToggleButton(root.transform);
+    }
+
+    private void CreateTimerPanel(Transform parent)
+    {
+        RectTransform bar = CreatePanel("Wave Timer", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        bar.anchorMin = new Vector2(0f, .015f);
+        bar.anchorMax = new Vector2(.20f, .075f);
+        bar.offsetMin = new Vector2(18f, 0f);
+        bar.offsetMax = Vector2.zero;
+
+        _timerText = CreateText(string.Empty, bar, 14, TextAnchor.MiddleCenter, new Vector2(.04f, .1f), new Vector2(.96f, .9f));
+        _timerText.color = new Color(1f, .85f, .35f, 1f);
+    }
+
+    private void CreateHealthBarPanel(Transform parent)
+    {
+        RectTransform bar = CreatePanel("Heart Health Bar", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        bar.anchorMin = new Vector2(.38f, .015f);
+        bar.anchorMax = new Vector2(.62f, .075f);
+        bar.offsetMin = bar.offsetMax = Vector2.zero;
+
+        _heartText = CreateText("Heart: -- / --", bar, 14, TextAnchor.MiddleCenter, new Vector2(.04f, .55f), new Vector2(.96f, .95f));
+
+        RectTransform healthBackground = CreatePanel("Heart Health Background", bar, new Color(.12f, .04f, .04f, 1f));
+        healthBackground.anchorMin = new Vector2(.04f, .12f);
+        healthBackground.anchorMax = new Vector2(.96f, .48f);
+        healthBackground.offsetMin = healthBackground.offsetMax = Vector2.zero;
+
+        GameObject fillObject = new GameObject("Fill", typeof(Image));
+        fillObject.transform.SetParent(healthBackground, false);
+        Image fillImage = fillObject.GetComponent<Image>();
+        fillImage.color = new Color(.8f, .18f, .16f, 1f);
+        fillImage.type = Image.Type.Filled;
+        fillImage.fillMethod = Image.FillMethod.Horizontal;
+        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+        fillImage.fillAmount = 1f;
+        RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero; fillRect.anchorMax = Vector2.one; fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
+        _heartFill = fillImage;
     }
 
     private void Update()
     {
         RefreshStatusBar();
+        RefreshStartWaveButton();
+        RefreshHud();
+    }
+
+    private void RefreshHud()
+    {
+        if (_heartText != null)
+        {
+            CartageHeart heart = CartageHeart.Instance;
+            int current = heart != null ? Mathf.Max(0, heart.CurrentHealth) : 0;
+            int max = heart != null && heart.MaxHealth > 0 ? heart.MaxHealth : 1;
+            _heartText.text = "Heart: " + current + " / " + max;
+            if (_heartFill != null) _heartFill.fillAmount = (float)current / max;
+        }
+
+        if (_timerText == null) return;
+        if (GameManger.Instance != null && GameManger.Instance.IsWaveRunning) _timerText.text = "Wave in progress";
+        else if (GameManger.Instance != null && GameManger.Instance.IsAutoStartPending)
+            _timerText.text = "Next wave: " + Mathf.CeilToInt(GameManger.Instance.AutoStartTimeRemaining) + "s";
+        else _timerText.text = string.Empty;
+    }
+
+    private void RefreshStartWaveButton()
+    {
+        bool waveRunning = GameManger.Instance != null && GameManger.Instance.IsWaveRunning;
+        if (waveRunning != _wasWaveRunning)
+        {
+            _wasWaveRunning = waveRunning;
+            if (!waveRunning) MusicManager.Instance?.PlayBuildMusic();
+        }
+
+        if (_startWaveButton != null) _startWaveButton.interactable = !waveRunning;
+        if (_startWaveLabel == null) return;
+
+        if (waveRunning) _startWaveLabel.text = "WAVE ACTIVE";
+        else if (GameManger.Instance != null && GameManger.Instance.IsAutoStartPending)
+            _startWaveLabel.text = "START WAVE\n(" + Mathf.CeilToInt(GameManger.Instance.AutoStartTimeRemaining) + "s)";
+        else _startWaveLabel.text = "START WAVE";
     }
 
     private void CreateSection(RectTransform parent, string heading, CarthaginianTowerDefinition[] definitions, Color color, int index)
@@ -177,7 +266,8 @@ public class CarthaginianBuildMenu : MonoBehaviour
         startRect.offsetMin = Vector2.zero;
         startRect.offsetMax = Vector2.zero;
         CenterButtonLabel(_startWaveButton);
-        _startWaveButton.onClick.AddListener(() => GameManger.Instance?.StartWaveSystem());
+        _startWaveLabel = _startWaveButton.GetComponentInChildren<Text>();
+        _startWaveButton.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); GameManger.Instance?.StartWaveSystem(); });
 
         _moneyText = CreateText("Coins: -- TND", bar, 16, TextAnchor.MiddleLeft, new Vector2(.24f, .18f), new Vector2(.52f, .82f));
         _crewText = CreateText("Crew: --", bar, 16, TextAnchor.MiddleLeft, new Vector2(.54f, .18f), new Vector2(.78f, .82f));
@@ -216,7 +306,11 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private void RefreshStatusBar()
     {
         if (_moneyText != null)
+        {
             _moneyText.text = EconomyManager.Instance != null ? "Coins: " + EconomyManager.Instance.Money + " TND" : "Coins: -- TND";
+            if (EconomyManager.Instance != null && EconomyManager.Instance.Debt > 0)
+                _moneyText.text += " (debt " + EconomyManager.Instance.Debt + ")";
+        }
 
         if (_crewText != null)
             _crewText.text = "Crew available: " + GetTotalCrewAvailable();
@@ -280,7 +374,12 @@ public class CarthaginianBuildMenu : MonoBehaviour
         if (definition.levels != null && definition.levels.Length > 0) text.Append("\nLevels: ").Append(definition.levels.Length);
         if (definition.levels != null && definition.levels.Length > 0 && definition.levels[0].unlockedShips != null)
             foreach (CarthaginianShipOption ship in definition.levels[0].unlockedShips)
-                if (ship != null) text.Append("\nShip: ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin");
+            {
+                if (ship == null) continue;
+                text.Append("\nShip: ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin");
+                CarthaginianShipCombat combat = ship.shipPrefab != null ? ship.shipPrefab.GetComponent<CarthaginianShipCombat>() : null;
+                if (combat != null) text.Append("\n  ").Append(ShipCounterTable.Describe(combat.CombatClass));
+            }
         return text.ToString();
     }
 

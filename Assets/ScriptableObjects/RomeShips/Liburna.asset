@@ -16,6 +16,7 @@ MonoBehaviour:
   shipDescription: A light Roman scout vessel. Fast and inexpensive, it forms the
     backbone of early invasions.
   mesh: {fileID: 0}
+  combatClass: 0
   crewSize: 20
   bounty: 10
   attackPower: 2

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fee4b7f8f03e742995ec75b81d61eb, type: 3}
+  m_Name: Sidi Bou Said
+  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTowerDefinition
+  towerName: Sidi Bou Said
+  description: Coastal recruiting post. Upgrading speeds up recruit arrivals and grows the crew intake.
+  icon: {fileID: 0}
+  category: 1
+  prefab: {fileID: 0}
+  buildCost: 0
+  requiredZoneId:
+  levels:
+  - title: I
+    upgradeCost: 100
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips: []
+  - title: II
+    upgradeCost: 220
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips: []
+  - title: III
+    upgradeCost: 400
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips: []
+  - title: IV
+    upgradeCost: 650
+    upgradeCrewRequired: 0
+    minimumUpgradeCrewRank: 0
+    unlockedShips: []

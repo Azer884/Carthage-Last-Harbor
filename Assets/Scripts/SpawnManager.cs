@@ -40,5 +40,8 @@ public class SpawnManager : MonoBehaviour
         if (health == null)
             health = ship.AddComponent<RomanShipHealth>();
         health.Configure(shipData.crewSize, shipData.bounty);
+
+        SpawnPopEffect.Apply(ship);
+        SfxManager.Instance?.PlayShipSpawned();
     }
 }
