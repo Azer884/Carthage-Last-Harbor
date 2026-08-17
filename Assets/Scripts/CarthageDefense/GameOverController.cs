@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -30,8 +31,6 @@ public class GameOverController : MonoBehaviour
 
     private void CreatePanel()
     {
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
         GameObject root = new GameObject("Game Over UI", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas canvas = root.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -50,14 +49,13 @@ public class GameOverController : MonoBehaviour
         panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
         _panel = panel;
 
-        GameObject titleObject = new GameObject("Title", typeof(Text));
+        GameObject titleObject = new GameObject("Title", typeof(TextMeshProUGUI));
         titleObject.transform.SetParent(panel.transform, false);
-        Text title = titleObject.GetComponent<Text>();
-        title.font = font;
+        TextMeshProUGUI title = titleObject.GetComponent<TextMeshProUGUI>();
         title.text = "GAME OVER";
         title.fontSize = 64;
-        title.fontStyle = FontStyle.Bold;
-        title.alignment = TextAnchor.MiddleCenter;
+        title.fontStyle = FontStyles.Bold;
+        title.alignment = TextAlignmentOptions.Center;
         title.color = new Color(.9f, .2f, .15f);
         RectTransform titleRect = title.rectTransform;
         titleRect.anchorMin = new Vector2(.2f, .55f);
@@ -72,13 +70,12 @@ public class GameOverController : MonoBehaviour
         buttonRect.anchorMax = new Vector2(.6f, .48f);
         buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
 
-        GameObject labelObject = new GameObject("Text", typeof(Text));
+        GameObject labelObject = new GameObject("Text", typeof(TextMeshProUGUI));
         labelObject.transform.SetParent(buttonObject.transform, false);
-        Text label = labelObject.GetComponent<Text>();
-        label.font = font;
+        TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
         label.text = "TRY AGAIN";
         label.fontSize = 24;
-        label.alignment = TextAnchor.MiddleCenter;
+        label.alignment = TextAlignmentOptions.Center;
         label.color = Color.white;
         RectTransform labelRect = label.rectTransform;
         labelRect.anchorMin = Vector2.zero;

@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Dragon of Carthage
   m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTowerDefinition
   towerName: Dragon of Carthage
-  description: Sacred dragon-prowed naval sanctuary that can launch the elite fleet.
+  description: "Sacred fire-breathing dragon bound to its shrine. Cannot sail \u2014
+    it only attacks Roman ships that come within range of the platform it is anchored
+    to."
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  category: 0
+  category: 1
   prefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
   buildCost: 50
   requiredZoneId: 
@@ -24,79 +26,19 @@ MonoBehaviour:
     upgradeCost: 200
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
-    unlockedShips:
-    - shipName: Dragon Galley
-      shipPrefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
-      shipCost: 20
-      spawnCooldown: 20
-      crewRequired: 20
-      minimumRank: 2
+    unlockedShips: []
   - title: II
     upgradeCost: 400
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
-    unlockedShips:
-    - shipName: Dragon Galley
-      shipPrefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
-      shipCost: 20
-      spawnCooldown: 20
-      crewRequired: 20
-      minimumRank: 2
-    - shipName: Dragon Trireme
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 25
-      crewRequired: 28
-      minimumRank: 2
+    unlockedShips: []
   - title: III
     upgradeCost: 700
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
-    unlockedShips:
-    - shipName: Dragon Galley
-      shipPrefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
-      shipCost: 20
-      spawnCooldown: 20
-      crewRequired: 20
-      minimumRank: 2
-    - shipName: Dragon Trireme
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 25
-      crewRequired: 28
-      minimumRank: 2
-    - shipName: Sacred Dragon Flagship
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 32
-      crewRequired: 36
-      minimumRank: 3
+    unlockedShips: []
   - title: IV
     upgradeCost: 1100
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
-    unlockedShips:
-    - shipName: Dragon Galley
-      shipPrefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
-      shipCost: 20
-      spawnCooldown: 20
-      crewRequired: 20
-      minimumRank: 2
-    - shipName: Dragon Trireme
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 25
-      crewRequired: 28
-      minimumRank: 2
-    - shipName: Sacred Dragon Flagship
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 32
-      crewRequired: 36
-      minimumRank: 3
-    - shipName: Dragon of Baal Hammon
-      shipPrefab: {fileID: 0}
-      shipCost: 20
-      spawnCooldown: 45
-      crewRequired: 50
-      minimumRank: 3
+    unlockedShips: []

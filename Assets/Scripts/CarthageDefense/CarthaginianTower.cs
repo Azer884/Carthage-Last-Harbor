@@ -28,6 +28,8 @@ public class CarthaginianTower : MonoBehaviour
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
         SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
+        CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
+        if (dragonTower != null) dragonTower.SetLevel(currentLevel);
     }
 
     public void Initialize(CarthaginianTowerDefinition towerDefinition)
@@ -40,6 +42,8 @@ public class CarthaginianTower : MonoBehaviour
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
         SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
+        CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
+        if (dragonTower != null) dragonTower.SetLevel(currentLevel);
     }
 
     public bool TryUpgrade()
@@ -56,6 +60,8 @@ public class CarthaginianTower : MonoBehaviour
         if (stationaryTower != null) stationaryTower.SetLevel(currentLevel);
         SidiBouSaidTower sidiBouSaid = GetComponent<SidiBouSaidTower>();
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
+        CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
+        if (dragonTower != null) dragonTower.SetLevel(currentLevel);
         return true;
     }
 

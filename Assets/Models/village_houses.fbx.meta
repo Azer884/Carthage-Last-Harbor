@@ -1,39 +1,9 @@
 fileFormatVersion: 2
-guid: 86747e12305bec14b8c08f0a993e2cc0
+guid: cc1f1f3d756cd564bb97388f96f6fc49
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Hull
-    second: {fileID: 2100000, guid: 337efdc2c6f463e4fb1fc957be92ab30, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Hull Trim_
-    second: {fileID: 2100000, guid: cb0cf332af7888f40b8aabc52950ab6c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Painted Hull Trim Red-Yellow
-    second: {fileID: 2100000, guid: afe3dba367aa58441b9761afadac998d, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Painted Hull Yellow
-    second: {fileID: 2100000, guid: e8a5cc81713e7ad41bfddc8405a615e0, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Rope
-    second: {fileID: 2100000, guid: 39c75a9892b95be4c8323640583c1e3f, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Sail
-    second: {fileID: 2100000, guid: 1bab90568d0e801498188897f95360ad, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -60,36 +30,7 @@ ModelImporter:
     animationWrapMode: 0
     extraExposedTransformPaths: []
     extraUserProperties: []
-    clipAnimations:
-    - serializedVersion: 16
-      name: Scene
-      takeName: Scene
-      internalID: -623603649343465320
-      firstFrame: 3
-      lastFrame: 5.6
-      wrapMode: 0
-      orientationOffsetY: 0
-      level: 0
-      cycleOffset: 0
-      loop: 0
-      hasAdditiveReferencePose: 0
-      loopTime: 1
-      loopBlend: 0
-      loopBlendOrientation: 0
-      loopBlendPositionY: 0
-      loopBlendPositionXZ: 0
-      keepOriginalOrientation: 0
-      keepOriginalPositionY: 1
-      keepOriginalPositionXZ: 0
-      heightFromFeet: 0
-      mirror: 0
-      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
-      curves: []
-      events: []
-      transformMask: []
-      maskType: 3
-      maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
+    clipAnimations: []
     isReadable: 0
   meshes:
     lODScreenPercentages: []

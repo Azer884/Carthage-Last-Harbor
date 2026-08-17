@@ -10,6 +10,7 @@ public class TowerSelectionManager : MonoBehaviour
     public static TowerSelectionManager Instance { get; private set; }
     [SerializeField, Range(.1f, .95f)] private float sellRefundFraction = .6f;
     private TowerPlacementController _placement;
+    private DragonTowerPlacementController _dragonPlacement;
     private GameObject _selected;
     private Outline _selectedOutline;
     private Outline _hoverOutline;
@@ -35,6 +36,7 @@ public class TowerSelectionManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         _placement = FindFirstObjectByType<TowerPlacementController>();
+        _dragonPlacement = FindFirstObjectByType<DragonTowerPlacementController>();
         CreatePanel();
     }
 
@@ -66,7 +68,7 @@ public class TowerSelectionManager : MonoBehaviour
     {
         if (_selected != null && _selected.GetComponent<CartageHeart>() == null) RefreshPanel();
         else if (_selected == null) HidePanel();
-        if (Mouse.current == null || (_placement != null && _placement.IsPlacing)) { SetHover(null); return; }
+        if (Mouse.current == null || (_placement != null && _placement.IsPlacing) || (_dragonPlacement != null && _dragonPlacement.IsPlacing)) { SetHover(null); return; }
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) { SetHover(null); return; }
         Camera camera = Camera.main;
         if (camera == null) return;
@@ -413,6 +415,13 @@ public class TowerSelectionManager : MonoBehaviour
         {
             StationaryTowerLevel stats = stationary.ActiveStats;
             return "Damage: " + stats.damage + "\nSight range: " + stats.sightRange + "\nAttack range: " + stats.attackRange + "\nAttack cooldown: " + stats.attackCooldown + " sec";
+        }
+        CarthaginianDragonTower dragon = tower.GetComponent<CarthaginianDragonTower>();
+        if (dragon != null && dragon.ActiveStats != null)
+        {
+            DragonTowerLevel stats = dragon.ActiveStats;
+            return "Damage: " + stats.damage + (stats.splashRadius > 0f ? " (splash " + stats.splashRadius + "m)" : "")
+                + "\nSight range: " + stats.sightRange + "\nAttack range: " + stats.attackRange + "\nAttack cooldown: " + stats.attackCooldown + " sec";
         }
         SidiBouSaidTower sidiBouSaid = tower.GetComponent<SidiBouSaidTower>();
         if (sidiBouSaid != null) return "Generates " + sidiBouSaid.CrewPerSecond.ToString("0.00") + " crew/sec";

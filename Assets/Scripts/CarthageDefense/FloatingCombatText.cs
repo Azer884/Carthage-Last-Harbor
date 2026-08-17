@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,30 +7,28 @@ using UnityEngine.UI;
 public class FloatingCombatText : MonoBehaviour
 {
     private static Canvas _canvas;
-    private static Font _font;
     private static readonly List<FloatingCombatText> _active = new List<FloatingCombatText>();
 
     [SerializeField] private float lifetime = 1.1f;
     [SerializeField] private float riseSpeed = 1.1f;
 
     private Vector3 _worldPosition;
-    private Text _text;
+    private TextMeshProUGUI _text;
     private float _elapsed;
 
     public static void Spawn(Vector3 worldPosition, string message, Color color)
     {
         EnsureCanvas();
-        GameObject obj = new GameObject("Floating Text", typeof(Text));
+        GameObject obj = new GameObject("Floating Text", typeof(TextMeshProUGUI));
         obj.transform.SetParent(_canvas.transform, false);
-        Text text = obj.GetComponent<Text>();
-        text.font = _font;
+        TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
         text.fontSize = 26;
-        text.fontStyle = FontStyle.Bold;
-        text.alignment = TextAnchor.MiddleCenter;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.Center;
         text.color = color;
         text.text = message;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
         text.rectTransform.sizeDelta = new Vector2(240f, 40f);
 
         FloatingCombatText floating = obj.AddComponent<FloatingCombatText>();
@@ -64,7 +63,6 @@ public class FloatingCombatText : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920, 1080);
         Object.DontDestroyOnLoad(root);
         _canvas = canvas;
-        _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 
     private void Update()

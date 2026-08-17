@@ -7,6 +7,7 @@ TagManager:
   - Path
   - RomeShip
   - CartageShip
+  - StationaryTowerPlace
   layers:
   - Default
   - TransparentFX

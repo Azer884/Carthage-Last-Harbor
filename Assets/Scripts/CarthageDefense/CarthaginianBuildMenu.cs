@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -16,6 +17,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private TowerPlacementController placementController;
+    [SerializeField] private DragonTowerPlacementController dragonPlacementController;
     [Header("Tower catalogue")]
     [SerializeField] private CarthaginianTowerDefinition[] attackTowers;
     [SerializeField] private CarthaginianTowerDefinition[] defenseTowers;
@@ -26,25 +28,24 @@ public class CarthaginianBuildMenu : MonoBehaviour
     [SerializeField] private Color defenseColor = new Color(0.12f, 0.27f, 0.48f, 0.95f);
     [SerializeField] private Color resourceColor = new Color(0.18f, 0.40f, 0.24f, 0.95f);
 
-    private Font _font;
-    private Text _moneyText;
-    private Text _crewText;
-    private Text _workerText;
+    private TextMeshProUGUI _moneyText;
+    private TextMeshProUGUI _crewText;
+    private TextMeshProUGUI _workerText;
     private Button _startWaveButton;
-    private Text _startWaveLabel;
-    private Text _tooltip;
+    private TextMeshProUGUI _startWaveLabel;
+    private TextMeshProUGUI _tooltip;
     private GameObject _tooltipPanel;
     private RectTransform _menu;
     private bool _isVisible = true;
     private bool _wasWaveRunning;
     private Image _heartFill;
-    private Text _heartText;
-    private Text _timerText;
+    private TextMeshProUGUI _heartText;
+    private TextMeshProUGUI _timerText;
 
     private void Awake()
     {
         if (placementController == null) placementController = FindAnyObjectByType<TowerPlacementController>();
-        _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (dragonPlacementController == null) dragonPlacementController = FindAnyObjectByType<DragonTowerPlacementController>();
         EnsureEventSystem();
         TowerSelectionManager.Ensure();
         GameOverController.Ensure();
@@ -202,14 +203,19 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private void CreateTowerButton(RectTransform parent, CarthaginianTowerDefinition definition, int index, int count)
     {
         Button button = CreateButton(parent, definition.towerName, definition.icon, index, count);
-        button.onClick.AddListener(() => { if (placementController != null) placementController.SelectTower(definition); });
+        bool placesOnStationarySlot = definition.prefab != null && definition.prefab.GetComponent<CarthaginianDragonTower>() != null;
+        button.onClick.AddListener(() =>
+        {
+            if (placesOnStationarySlot) { if (dragonPlacementController != null) dragonPlacementController.SelectDragon(definition); }
+            else { dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectTower(definition); }
+        });
         AddTooltip(button.gameObject, BuildTowerTooltip(definition));
     }
 
     private void CreateResourceButton(RectTransform parent, CarthaginianResourceDefinition definition, int index, int count)
     {
         Button button = CreateButton(parent, definition.buildingName, definition.icon, index, count);
-        button.onClick.AddListener(() => { if (placementController != null) placementController.SelectResourceTower(definition); });
+        button.onClick.AddListener(() => { dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectResourceTower(definition); });
         AddTooltip(button.gameObject, BuildResourceTooltip(definition));
     }
 
@@ -266,7 +272,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         startRect.offsetMin = Vector2.zero;
         startRect.offsetMax = Vector2.zero;
         CenterButtonLabel(_startWaveButton);
-        _startWaveLabel = _startWaveButton.GetComponentInChildren<Text>();
+        _startWaveLabel = _startWaveButton.GetComponentInChildren<TextMeshProUGUI>();
         _startWaveButton.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); GameManger.Instance?.StartWaveSystem(); });
 
         _moneyText = CreateText("Coins: -- TND", bar, 16, TextAnchor.MiddleLeft, new Vector2(.24f, .18f), new Vector2(.52f, .82f));
@@ -332,9 +338,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private void CenterButtonLabel(Button button)
     {
         if (button == null) return;
-        Text label = button.GetComponentInChildren<Text>();
+        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
         if (label == null) return;
-        label.alignment = TextAnchor.MiddleCenter;
+        label.alignment = TextAlignmentOptions.Center;
         RectTransform rect = label.rectTransform;
         rect.anchorMin = new Vector2(.04f, .05f);
         rect.anchorMax = new Vector2(.96f, .95f);
@@ -356,10 +362,10 @@ public class CarthaginianBuildMenu : MonoBehaviour
         return panel.GetComponent<RectTransform>();
     }
 
-    private Text CreateText(string text, RectTransform parent, int fontSize, TextAnchor alignment, Vector2 min, Vector2 max)
+    private TextMeshProUGUI CreateText(string text, RectTransform parent, int fontSize, TextAnchor alignment, Vector2 min, Vector2 max)
     {
-        GameObject textObject = new GameObject("Text", typeof(Text)); textObject.transform.SetParent(parent, false);
-        Text result = textObject.GetComponent<Text>(); result.font = _font; result.text = text; result.fontSize = fontSize; result.alignment = alignment; result.color = Color.white; result.horizontalOverflow = HorizontalWrapMode.Wrap; result.verticalOverflow = VerticalWrapMode.Overflow;
+        GameObject textObject = new GameObject("Text", typeof(TextMeshProUGUI)); textObject.transform.SetParent(parent, false);
+        TextMeshProUGUI result = textObject.GetComponent<TextMeshProUGUI>(); result.text = text; result.fontSize = fontSize; result.alignment = TmpTextUtility.ToTmpAlignment(alignment); result.color = Color.white; result.enableWordWrapping = true; result.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = result.rectTransform; rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         return result;
     }
