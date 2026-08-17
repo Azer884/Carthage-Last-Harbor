@@ -14,6 +14,7 @@ public class TowerSelectionManager : MonoBehaviour
     private GameObject _selected;
     private Outline _selectedOutline;
     private Outline _hoverOutline;
+    private SightRangeRing _selectedRing;
     private GameObject _panel;
     private TextMeshProUGUI _title;
     private TextMeshProUGUI _details;
@@ -47,6 +48,7 @@ public class TowerSelectionManager : MonoBehaviour
         foreach (CarthaginianResourceTower resource in FindObjectsByType<CarthaginianResourceTower>(FindObjectsSortMode.None)) EnsureSelectableCollider(resource.gameObject);
         foreach (JemColosseum jem in FindObjectsByType<JemColosseum>(FindObjectsSortMode.None)) EnsureSelectableCollider(jem.gameObject);
         foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None)) EnsureSelectableCollider(heart.gameObject);
+        foreach (CarthaginianShipCombat ship in FindObjectsByType<CarthaginianShipCombat>(FindObjectsSortMode.None)) EnsureSelectableCollider(ship.gameObject);
         SetAllSelectableOutlines(false);
     }
 
@@ -64,10 +66,22 @@ public class TowerSelectionManager : MonoBehaviour
         collider.size = new Vector3(Mathf.Abs(localMax.x - localMin.x), Mathf.Abs(localMax.y - localMin.y), Mathf.Abs(localMax.z - localMin.z));
     }
 
+    // Ships are spawned at runtime, never hand-authored with an Outline like scene-placed towers, so give
+    // them one on demand (disabled — hover/select turns it on) the first time selection logic touches them.
+    public static void EnsureSelectableOutline(GameObject building)
+    {
+        if (building == null || building.GetComponentInChildren<Outline>(true) != null) return;
+        building.AddComponent<Outline>().enabled = false;
+    }
+
     private void Update()
     {
         if (_selected != null && _selected.GetComponent<CartageHeart>() == null) RefreshPanel();
         else if (_selected == null) HidePanel();
+        // Keeps the ring's radius live — e.g. growing smoothly the instant an upgrade increases sight
+        // range, instead of only refreshing next time the tower is reselected.
+        if (_selected != null && _selectedRing != null && TryGetRangeVisual(_selected, out float liveRange, out Color liveColor))
+            _selectedRing.Show(liveRange, liveColor);
         if (Mouse.current == null || (_placement != null && _placement.IsPlacing) || (_dragonPlacement != null && _dragonPlacement.IsPlacing)) { SetHover(null); return; }
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) { SetHover(null); return; }
         Camera camera = Camera.main;
@@ -96,12 +110,19 @@ public class TowerSelectionManager : MonoBehaviour
     {
         if (building == null) return;
         bool isHeart = building.GetComponent<CartageHeart>() != null;
-        if (!isHeart && building.GetComponent<CarthaginianTower>() == null && building.GetComponent<CarthaginianResourceTower>() == null && building.GetComponent<JemColosseum>() == null) return;
+        if (!isHeart && building.GetComponent<CarthaginianTower>() == null && building.GetComponent<CarthaginianResourceTower>() == null
+            && building.GetComponent<JemColosseum>() == null && building.GetComponent<CarthaginianShipCombat>() == null) return;
         if (_selected == building) return;
         Deselect();
         _selected = building;
         _selectedOutline = building.GetComponentInChildren<Outline>(true);
         if (_selectedOutline != null) _selectedOutline.enabled = true;
+        if (TryGetRangeVisual(building, out float range, out Color rangeColor))
+        {
+            _selectedRing = building.GetComponent<SightRangeRing>();
+            if (_selectedRing == null) _selectedRing = building.AddComponent<SightRangeRing>();
+            _selectedRing.Show(range, rangeColor);
+        }
         if (isHeart) { MercenaryMarketUI.Ensure().Show(); return; }
         _panel.SetActive(true);
         RefreshPanel();
@@ -110,9 +131,33 @@ public class TowerSelectionManager : MonoBehaviour
     public void Deselect()
     {
         if (_selectedOutline != null) _selectedOutline.enabled = false;
+        if (_selectedRing != null) _selectedRing.Hide();
         if (_selected != null && _selected.GetComponent<CartageHeart>() != null) MercenaryMarketUI.Instance?.Hide();
-        _selected = null; _selectedOutline = null;
+        _selected = null; _selectedOutline = null; _selectedRing = null;
         HidePanel();
+    }
+
+    private static readonly Color SightRangeColor = new Color(.3f, .85f, 1f, .16f);
+    private static readonly Color SpawnRangeColor = new Color(1f, .75f, .2f, .16f);
+    private static readonly Color ExtractionRangeColor = new Color(.45f, .85f, .35f, .16f);
+
+    // Combat units show their real sight range in blue. Towers with no combat range of their own (ship
+    // docks, resource extractors) instead show a cosmetic reach indicator in its own color, so every
+    // selectable building displays *something* without conflating "how far it can see" with "how far it
+    // spawns/mines from".
+    private bool TryGetRangeVisual(GameObject building, out float range, out Color color)
+    {
+        CarthaginianStationaryTower stationary = building.GetComponent<CarthaginianStationaryTower>();
+        if (stationary != null && stationary.ActiveStats != null) { range = stationary.ActiveStats.sightRange; color = SightRangeColor; return true; }
+        CarthaginianDragonTower dragon = building.GetComponent<CarthaginianDragonTower>();
+        if (dragon != null && dragon.ActiveStats != null) { range = dragon.ActiveStats.sightRange; color = SightRangeColor; return true; }
+        CarthaginianShipCombat ship = building.GetComponent<CarthaginianShipCombat>();
+        if (ship != null) { range = ship.SightRange; color = SightRangeColor; return true; }
+        LighthouseSpawner spawner = building.GetComponent<LighthouseSpawner>();
+        if (spawner != null) { range = spawner.DisplayRange; color = SpawnRangeColor; return true; }
+        CarthaginianResourceTower resource = building.GetComponent<CarthaginianResourceTower>();
+        if (resource != null) { range = resource.DisplayRange; color = ExtractionRangeColor; return true; }
+        range = 0f; color = default; return false;
     }
 
     private GameObject GetSelectableBuilding(Collider collider)
@@ -125,7 +170,9 @@ public class TowerSelectionManager : MonoBehaviour
         JemColosseum jem = collider.GetComponentInParent<JemColosseum>();
         if (jem != null) return jem.gameObject;
         CartageHeart heart = collider.GetComponentInParent<CartageHeart>();
-        return heart != null ? heart.gameObject : null;
+        if (heart != null) return heart.gameObject;
+        CarthaginianShipCombat ship = collider.GetComponentInParent<CarthaginianShipCombat>();
+        return ship != null ? ship.gameObject : null;
     }
 
     private void SetHover(GameObject building)
@@ -147,6 +194,8 @@ public class TowerSelectionManager : MonoBehaviour
             foreach (Outline outline in jem.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
         foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None))
             foreach (Outline outline in heart.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
+        foreach (CarthaginianShipCombat ship in FindObjectsByType<CarthaginianShipCombat>(FindObjectsSortMode.None))
+            foreach (Outline outline in ship.GetComponentsInChildren<Outline>(true)) outline.enabled = enabled;
     }
 
     private GameObject FindBuildingNearScreenPoint(Camera camera, Vector2 screenPoint)
@@ -161,6 +210,8 @@ public class TowerSelectionManager : MonoBehaviour
             ConsiderVisibleBuilding(jem.gameObject, camera, screenPoint, ref closest, ref closestPixels);
         foreach (CartageHeart heart in FindObjectsByType<CartageHeart>(FindObjectsSortMode.None))
             ConsiderVisibleBuilding(heart.gameObject, camera, screenPoint, ref closest, ref closestPixels);
+        foreach (CarthaginianShipCombat ship in FindObjectsByType<CarthaginianShipCombat>(FindObjectsSortMode.None))
+            ConsiderVisibleBuilding(ship.gameObject, camera, screenPoint, ref closest, ref closestPixels);
         return closest;
     }
 
@@ -208,7 +259,7 @@ public class TowerSelectionManager : MonoBehaviour
         Button close = CreateButton(panel.transform, new Vector2(.82f, .87f), new Vector2(.94f, .95f));
         close.GetComponent<Image>().color = new Color(.38f, .12f, .1f, 1f);
         close.GetComponentInChildren<TextMeshProUGUI>().text = "X";
-        close.onClick.AddListener(Deselect);
+        close.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); Deselect(); });
         _upgrade = CreateButton(panel.transform, new Vector2(.08f, .15f), new Vector2(.92f, .25f));
         _upgradeText = _upgrade.GetComponentInChildren<TextMeshProUGUI>();
         _upgrade.onClick.AddListener(UpgradeSelected);
@@ -397,6 +448,19 @@ public class TowerSelectionManager : MonoBehaviour
             SetActiveSafe(_sell.gameObject, false);
             return;
         }
+        CarthaginianShipCombat ship = _selected.GetComponent<CarthaginianShipCombat>();
+        if (ship != null)
+        {
+            CarthaginianShipCrew crew = _selected.GetComponent<CarthaginianShipCrew>();
+            _title.text = _selected.name.Replace("(Clone)", string.Empty).Trim();
+            _details.text = "Crew aboard: " + (crew != null ? crew.CrewNumber : 0)
+                + "\nDamage: " + ship.AttackDamage + "\nSight range: " + ship.SightRange + "\nAttack range: " + ship.AttackRange + "\nAttack cooldown: " + ship.AttackCooldown + " sec"
+                + "\n" + ShipCounterTable.Describe(ship.CombatClass);
+            SetActiveSafe(_upgrade.gameObject, false);
+            _upgradeHint.text = string.Empty;
+            SetActiveSafe(_sell.gameObject, false);
+            return;
+        }
         CarthaginianResourceTower resource = _selected.GetComponent<CarthaginianResourceTower>();
         CarthaginianResourceDefinition resourceDefinition = resource != null ? resource.Definition : null;
         _title.text = resourceDefinition != null ? resourceDefinition.buildingName : _selected.name;
@@ -452,9 +516,14 @@ public class TowerSelectionManager : MonoBehaviour
         return resource != null && resource.Definition != null ? Mathf.FloorToInt(resource.Definition.buildCost * sellRefundFraction) : 0;
     }
 
-    private void UpgradeSelected() { if (_selected != null) _selected.GetComponent<CarthaginianTower>()?.TryUpgrade(); }
+    private void UpgradeSelected()
+    {
+        SfxManager.Instance?.PlayButtonClick();
+        if (_selected != null) _selected.GetComponent<CarthaginianTower>()?.TryUpgrade();
+    }
     private void TrainSelected(CrewRank rank, int inputIndex)
     {
+        SfxManager.Instance?.PlayButtonClick();
         if (_selected == null) return;
         JemColosseum jem = _selected.GetComponent<JemColosseum>();
         if (jem == null) return;
@@ -475,7 +544,9 @@ public class TowerSelectionManager : MonoBehaviour
     public void HideUpgradeRequirement() { if (_upgradeHint != null) _upgradeHint.text = string.Empty; }
     private void SellSelected()
     {
+        SfxManager.Instance?.PlayButtonClick();
         if (_selected == null) return;
+        if (_selected.GetComponent<CarthaginianShipCombat>() != null) return;
         CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
         if (tower != null && !tower.Sellable) return;
         if (_selected.GetComponent<JemColosseum>() != null) return;

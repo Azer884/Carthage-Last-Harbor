@@ -79,7 +79,7 @@ public class MercenaryMarketUI : MonoBehaviour
         Button close = CreateButton(new Vector2(.88f, .90f), new Vector2(.97f, .98f));
         close.GetComponent<Image>().color = new Color(.38f, .12f, .1f, 1f);
         close.GetComponentInChildren<TextMeshProUGUI>().text = "X";
-        close.onClick.AddListener(() => TowerSelectionManager.Instance?.Deselect());
+        close.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); TowerSelectionManager.Instance?.Deselect(); });
 
         _rows = new Row[3];
         for (int i = 0; i < _rows.Length; i++)
@@ -104,6 +104,7 @@ public class MercenaryMarketUI : MonoBehaviour
 
     private void OnAction(int index)
     {
+        SfxManager.Instance?.PlayButtonClick();
         MercenaryMarket market = MercenaryMarket.Ensure();
         if (index < 0 || index >= market.Offers.Length) return;
         int quantity = ParseQuantity(_rows[index].quantity.text, market.Offers[index].currentStock);

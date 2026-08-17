@@ -45,7 +45,8 @@ public class CartageHeart : MonoBehaviour, ICombatTarget
     private void HandleDestroyed()
     {
         HasBeenDestroyed = true;
-        CombatFx.PlayExplosion(transform.position);
+        CombatFx.PlayExplosion(transform.position, 2.4f);
+        CameraShake.Shake(1f);
         if (destroyFxPrefab != null) Instantiate(destroyFxPrefab, transform.position, Quaternion.identity);
         gameObject.SetActive(false);
         Destroyed?.Invoke();

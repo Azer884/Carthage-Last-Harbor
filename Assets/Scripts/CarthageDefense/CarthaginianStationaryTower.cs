@@ -28,18 +28,25 @@ public class CarthaginianStationaryTower : MonoBehaviour
         _nextAttackTime = Time.time + stats.attackCooldown;
         _target.TakeDamage(stats.damage);
         FloatingCombatText.Spawn(_target.transform.position, "-" + Mathf.CeilToInt(stats.damage), new Color(1f, .82f, .25f));
+        CombatFx.PlayImpactSpark(_target.transform.position);
+        CameraShake.Shake(.08f);
+        SfxManager.Instance?.PlayShipAttack();
     }
 
+    // Among Roman ships within sight range, engage whichever is furthest along its spline toward the
+    // heart (not just whichever happens to be physically closest to this tower).
     private RomanShipHealth FindTarget(float range)
     {
-        RomanShipHealth closest = null; float closestDistance = range;
+        RomanShipHealth best = null; float bestProgress = -1f;
         foreach (RomanShipHealth candidate in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
         {
             if (candidate.IsDestroyed) continue;
-            float distance = Vector3.Distance(transform.position, candidate.transform.position);
-            if (distance < closestDistance) { closest = candidate; closestDistance = distance; }
+            if (Vector3.Distance(transform.position, candidate.transform.position) > range) continue;
+            RomanShip romanShip = candidate.GetComponent<RomanShip>();
+            float progress = romanShip != null ? romanShip.PathProgress : 0f;
+            if (progress > bestProgress) { best = candidate; bestProgress = progress; }
         }
-        return closest;
+        return best;
     }
 
     private void Face(Vector3 targetPosition)

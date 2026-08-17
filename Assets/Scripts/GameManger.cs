@@ -25,12 +25,24 @@ public class GameManger : MonoBehaviour
     private int _currentWaveIndex;
     private float _autoStartTimer;
     private bool _autoStartPending;
+    private int _shipsQueuedThisWave;
+    private bool _preWaveDelayActive;
+    private float _preWaveDelayRemaining;
 
     public bool IsWaveRunning => (_waveRoutine != null || AnyRomanShipsAlive()) && !CartageHeart.HasBeenDestroyed;
     public bool IsAutoStartPending => _autoStartPending;
     public float AutoStartTimeRemaining => _autoStartPending ? Mathf.Max(0f, _autoStartTimer) : 0f;
+    // The short "wave N about to spawn" gap after a wave is triggered (auto or manual click) but before its
+    // ships actually appear — separate from the auto-start countdown, which is the (much longer) idle gap
+    // before the player/timer even triggers the next wave. The big on-screen 3-2-1 uses whichever is active.
+    public bool IsPreWaveDelayActive => _preWaveDelayActive;
+    public float PreWaveDelayRemaining => _preWaveDelayActive ? Mathf.Max(0f, _preWaveDelayRemaining) : 0f;
     public int CurrentWaveIndex => _currentWaveIndex;
+    // Ships still to be spawned in the wave currently in progress (0 once the last one has launched).
+    public int ShipsQueuedThisWave => _shipsQueuedThisWave;
     public event Action<int> WaveStarted;
+    // Fires once every ship from the wave is gone (not on heart destruction — that's game over, not a win).
+    public event Action<int> WaveCompleted;
 
     private bool AnyRomanShipsAlive()
     {
@@ -111,8 +123,13 @@ public class GameManger : MonoBehaviour
         }
 
         _currentWaveIndex = 0;
+        _shipsQueuedThisWave = 0;
+        _preWaveDelayActive = false;
     }
 
+    // Runs exactly ONE wave, then returns — it does not chain into the next wave itself. The next wave
+    // only becomes available once every ship from this one is gone (see the WaitUntil below), at which
+    // point it hands off to the normal auto-start countdown (or waits for the player to click Start).
     private IEnumerator RunWaves()
     {
         if (spawnManager == null)
@@ -129,31 +146,43 @@ public class GameManger : MonoBehaviour
             yield break;
         }
 
-        for (_currentWaveIndex = 0; endlessScaling || _currentWaveIndex < waves.Count; _currentWaveIndex++)
+        if (!endlessScaling && _currentWaveIndex >= waves.Count)
         {
-            WaveDefinition wave = BuildWave(_currentWaveIndex);
-            if (wave == null)
-            {
-                continue;
-            }
+            _waveRoutine = null;
+            yield break;
+        }
 
+        WaveDefinition wave = BuildWave(_currentWaveIndex);
+        if (wave != null)
+        {
             if (wave.startDelay > 0f)
             {
-                yield return new WaitForSeconds(wave.startDelay);
+                _preWaveDelayActive = true;
+                _preWaveDelayRemaining = wave.startDelay;
+                while (_preWaveDelayRemaining > 0f)
+                {
+                    _preWaveDelayRemaining -= Time.deltaTime;
+                    yield return null;
+                }
+                _preWaveDelayActive = false;
             }
 
             WaveStarted?.Invoke(_currentWaveIndex);
             yield return SpawnWave(wave);
-
-            bool isLastConfiguredWave = !endlessScaling && _currentWaveIndex >= waves.Count - 1;
-            if (!isLastConfiguredWave && timeBetweenWaves > 0f)
+            yield return new WaitUntil(() => !AnyRomanShipsAlive() || CartageHeart.HasBeenDestroyed);
+            if (!CartageHeart.HasBeenDestroyed)
             {
-                yield return new WaitForSeconds(timeBetweenWaves);
+                WaveCompleted?.Invoke(_currentWaveIndex);
+                if (timeBetweenWaves > 0f)
+                {
+                    yield return new WaitForSeconds(timeBetweenWaves);
+                }
             }
         }
 
+        _currentWaveIndex++;
         _waveRoutine = null;
-        if (autoStartWaves)
+        if (autoStartWaves && !CartageHeart.HasBeenDestroyed)
         {
             BeginAutoStartCountdown();
         }
@@ -206,6 +235,10 @@ public class GameManger : MonoBehaviour
 
     private IEnumerator SpawnWave(WaveDefinition wave)
     {
+        _shipsQueuedThisWave = 0;
+        foreach (WaveShipEntry entry in wave.ships)
+            if (entry != null && entry.ship != null && entry.amount > 0) _shipsQueuedThisWave += entry.amount;
+
         foreach (WaveShipEntry entry in wave.ships)
         {
             if (entry == null || entry.ship == null || entry.amount <= 0)
@@ -218,6 +251,7 @@ public class GameManger : MonoBehaviour
                 bool willAttack = UnityEngine.Random.value <= entry.attackChancePercent / 100f;
                 bool willPreferTowers = UnityEngine.Random.value <= entry.towerAttackChancePercent / 100f;
                 spawnManager.SpawnShip(entry.ship, willAttack, willPreferTowers);
+                _shipsQueuedThisWave = Mathf.Max(0, _shipsQueuedThisWave - 1);
 
                 if (entry.spawnInterval > 0f && i < entry.amount - 1)
                 {

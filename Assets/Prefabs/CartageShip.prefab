@@ -2527,6 +2527,7 @@ GameObject:
   - component: {fileID: 1873995615500466736}
   - component: {fileID: 5943878666547131356}
   - component: {fileID: 1865588513663212431}
+  - component: {fileID: -8595743002161142725}
   m_Layer: 0
   m_Name: CartageShip
   m_TagString: CartageShip
@@ -2676,6 +2677,22 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &-8595743002161142725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4672277572902736373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4ccd8344c43080408f0459441c6322e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipBuoyancy
+  bobAmplitude: 0.18
+  bobPeriod: 4.2
+  swayDegrees: 3.5
+  swayPeriod: 5.5
 --- !u!1 &4898372778645298924
 GameObject:
   m_ObjectHideFlags: 0

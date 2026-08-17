@@ -26,6 +26,7 @@ public class CarthaginianShipCombat : MonoBehaviour
     private RomanShipHealth _target;
     private CarthaginianShipCrew _crew;
     private float _nextAttackTime;
+    private AudioSource _sailingSource;
     public float SailSpeed => sailSpeed;
     public float WanderRange => wanderRange;
     public float SightRange => sightRange;
@@ -40,6 +41,23 @@ public class CarthaginianShipCombat : MonoBehaviour
         _homePosition = transform.position;
         _crew = GetComponent<CarthaginianShipCrew>();
         ChooseWaypoint();
+        TowerSelectionManager.EnsureSelectableCollider(gameObject);
+        TowerSelectionManager.EnsureSelectableOutline(gameObject);
+        if (GetComponent<ShipBuoyancy>() == null) gameObject.AddComponent<ShipBuoyancy>();
+        ShipWakeTrail.Attach(gameObject);
+        SetupSailingLoop();
+    }
+
+    private void SetupSailingLoop()
+    {
+        if (SfxManager.Instance == null || SfxManager.Instance.ShipSailingLoopClip == null) return;
+        _sailingSource = gameObject.AddComponent<AudioSource>();
+        _sailingSource.clip = SfxManager.Instance.ShipSailingLoopClip;
+        _sailingSource.loop = true;
+        _sailingSource.playOnAwake = false;
+        _sailingSource.spatialBlend = 1f;
+        _sailingSource.volume = SfxManager.Instance.LoopVolume;
+        _sailingSource.Play();
     }
 
     private void Update()
@@ -49,17 +67,21 @@ public class CarthaginianShipCombat : MonoBehaviour
         if (_target != null) EngageTarget(); else Patrol();
     }
 
+    // Among Roman ships within sight range, engage whichever is furthest along its spline toward the
+    // heart (not just whichever happens to be physically closest to this ship).
     private RomanShipHealth FindTarget()
     {
-        RomanShipHealth closest = null;
-        float closestDistance = sightRange;
+        RomanShipHealth best = null;
+        float bestProgress = -1f;
         foreach (RomanShipHealth candidate in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
         {
             if (candidate.IsDestroyed) continue;
-            float distance = Vector3.Distance(transform.position, candidate.transform.position);
-            if (distance < closestDistance) { closest = candidate; closestDistance = distance; }
+            if (Vector3.Distance(transform.position, candidate.transform.position) > sightRange) continue;
+            RomanShip romanShip = candidate.GetComponent<RomanShip>();
+            float progress = romanShip != null ? romanShip.PathProgress : 0f;
+            if (progress > bestProgress) { best = candidate; bestProgress = progress; }
         }
-        return closest;
+        return best;
     }
 
     private void EngageTarget()
@@ -79,6 +101,9 @@ public class CarthaginianShipCombat : MonoBehaviour
         float damage = attackDamage * _crew.DamageMultiplier * GetCounterMultiplier();
         _target.TakeDamage(damage);
         FloatingCombatText.Spawn(targetPosition, "-" + Mathf.CeilToInt(damage), new Color(1f, .82f, .25f));
+        CombatFx.PlayImpactSpark(targetPosition);
+        CameraShake.Shake(.08f);
+        SfxManager.Instance?.PlayShipAttack();
     }
 
     private float GetCounterMultiplier()

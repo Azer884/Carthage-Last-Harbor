@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>Runtime tower progression. Each upgrade unlocks the ships configured for that level.</summary>
@@ -5,6 +6,8 @@ public class CarthaginianTower : MonoBehaviour
 {
     [SerializeField] private CarthaginianTowerDefinition definition;
     [SerializeField] private int currentLevel;
+    private Coroutine _bounceRoutine;
+    private Vector3 _baseScale;
     [Tooltip("Uncheck for fixed civic buildings (e.g. Sidi Bou Said) that the player should never be able to sell off.")]
     [SerializeField] private bool sellable = true;
     public CarthaginianTowerDefinition Definition => definition;
@@ -62,7 +65,43 @@ public class CarthaginianTower : MonoBehaviour
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
         CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
         if (dragonTower != null) dragonTower.SetLevel(currentLevel);
+        SfxManager.Instance?.PlayTowerUpgraded();
+        PlayUpgradeFx(currentLevel);
+        PlayUpgradeBounce(currentLevel);
         return true;
+    }
+
+    // Spawns at the tower's own origin — Sidi Bou Said gets an especially big celebratory burst (15x)
+    // since it's the one-off civic building; every other tower gets a strong but smaller one (5x).
+    private void PlayUpgradeFx(int tier)
+    {
+        float scale = GetComponent<SidiBouSaidTower>() != null ? 15f : 5f;
+        CombatFx.PlayUpgradeBurst(transform.position, tier, scale);
+    }
+
+    // Bigger and slightly longer at higher tiers — makes the top upgrade feel like the payoff it is,
+    // instead of the exact same wobble every time.
+    private void PlayUpgradeBounce(int tier)
+    {
+        if (_bounceRoutine == null) _baseScale = transform.localScale;
+        else StopCoroutine(_bounceRoutine);
+        _bounceRoutine = StartCoroutine(BounceScale(tier));
+    }
+
+    private IEnumerator BounceScale(int tier)
+    {
+        float duration = .3f + tier * .04f;
+        float bounceAmount = .14f + tier * .05f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float bounce = Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI) * bounceAmount;
+            transform.localScale = _baseScale * (1f + bounce);
+            yield return null;
+        }
+        transform.localScale = _baseScale;
+        _bounceRoutine = null;
     }
 
     private bool CanRosterFillUpgradeCrew()

@@ -1,10 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 
 namespace CarthageDefense
@@ -39,8 +42,25 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private bool _isVisible = true;
     private bool _wasWaveRunning;
     private Image _heartFill;
+    private float _heartFillTarget = 1f;
+    private Coroutine _heartFillRoutine;
     private TextMeshProUGUI _heartText;
     private TextMeshProUGUI _timerText;
+    private float _waveStartTime;
+    private TextMeshProUGUI _incomingText;
+    private TextMeshProUGUI _countdownText;
+    private RectTransform _countdownRect;
+    private int _lastCountdownShown = -1;
+    private Coroutine _countdownPunchRoutine;
+    private TextMeshProUGUI _waveBannerText;
+    private Coroutine _waveBannerRoutine;
+    private Button _speedButton;
+    private TextMeshProUGUI _speedLabel;
+    private static readonly float[] SpeedCycle = { 1.5f, 2f, 5f, 1f };
+    private int _speedIndex = -1;
+    private float _activeTimeScale = 1f;
+    private bool _isPaused;
+    private GameObject _pausePanel;
 
     private void Awake()
     {
@@ -54,8 +74,76 @@ public class CarthaginianBuildMenu : MonoBehaviour
         MercenaryMarket.Ensure();
         MercenaryMarketUI.Ensure();
         if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
+        if (Camera.main != null && Camera.main.GetComponent<CameraShake>() == null) Camera.main.gameObject.AddComponent<CameraShake>();
+        AmbientParticles.Ensure();
         EnsurePathArrowVisualizer();
         CreateMenu();
+    }
+
+    private void Start()
+    {
+        // GameManger.Instance is guaranteed set by the time any Start() runs, regardless of script order.
+        if (GameManger.Instance != null)
+        {
+            GameManger.Instance.WaveStarted += OnWaveStarted;
+            GameManger.Instance.WaveCompleted += OnWaveCompleted;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManger.Instance != null)
+        {
+            GameManger.Instance.WaveStarted -= OnWaveStarted;
+            GameManger.Instance.WaveCompleted -= OnWaveCompleted;
+        }
+    }
+
+    private void OnWaveStarted(int waveIndex)
+    {
+        _waveStartTime = Time.time;
+        if (_waveBannerText == null) return;
+        if (_waveBannerRoutine != null) StopCoroutine(_waveBannerRoutine);
+        _waveBannerRoutine = StartCoroutine(PlayWaveBanner("WAVE " + (waveIndex + 1), new Color(1f, .35f, .3f, 1f)));
+    }
+
+    private void OnWaveCompleted(int waveIndex)
+    {
+        if (_waveBannerText == null) return;
+        if (_waveBannerRoutine != null) StopCoroutine(_waveBannerRoutine);
+        _waveBannerRoutine = StartCoroutine(PlayWaveBanner("WAVE " + (waveIndex + 1) + " WON", new Color(.4f, 1f, .5f, 1f)));
+    }
+
+    private IEnumerator PlayWaveBanner(string text, Color color)
+    {
+        _waveBannerText.gameObject.SetActive(true);
+        _waveBannerText.text = text;
+        _waveBannerText.color = color;
+        const float fadeIn = .35f, hold = 1f, fadeOut = .5f;
+        float elapsed = 0f;
+        while (elapsed < fadeIn)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            SetTextAlpha(_waveBannerText, Mathf.Clamp01(elapsed / fadeIn));
+            yield return null;
+        }
+        SetTextAlpha(_waveBannerText, 1f);
+        yield return new WaitForSecondsRealtime(hold);
+        elapsed = 0f;
+        while (elapsed < fadeOut)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            SetTextAlpha(_waveBannerText, 1f - Mathf.Clamp01(elapsed / fadeOut));
+            yield return null;
+        }
+        _waveBannerText.gameObject.SetActive(false);
+    }
+
+    private static void SetTextAlpha(TextMeshProUGUI text, float alpha)
+    {
+        Color color = text.color;
+        color.a = alpha;
+        text.color = color;
     }
 
     private void EnsureEventSystem()
@@ -94,8 +182,128 @@ public class CarthaginianBuildMenu : MonoBehaviour
         CreateStatusBar(root.transform);
         CreateTimerPanel(root.transform);
         CreateHealthBarPanel(root.transform);
+        CreateIncomingPanel(root.transform);
+        CreateCountdownBanner(root.transform);
+        CreateWaveBanner(root.transform);
         CreateTooltip(root.transform);
         CreateToggleButton(root.transform);
+        CreateSpeedButton(root.transform);
+        CreatePausePanel(root.transform);
+    }
+
+    private void CreateWaveBanner(Transform parent)
+    {
+        GameObject textObject = new GameObject("Wave Start Banner", typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(parent, false);
+        _waveBannerText = textObject.GetComponent<TextMeshProUGUI>();
+        _waveBannerText.fontSize = 90;
+        _waveBannerText.fontStyle = FontStyles.Bold;
+        _waveBannerText.alignment = TextAlignmentOptions.Center;
+        _waveBannerText.color = new Color(1f, .35f, .3f, 1f);
+        _waveBannerText.enableWordWrapping = false;
+        _waveBannerText.overflowMode = TextOverflowModes.Overflow;
+        RectTransform rect = _waveBannerText.rectTransform;
+        rect.anchorMin = new Vector2(.2f, .74f);
+        rect.anchorMax = new Vector2(.8f, .86f);
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+        _waveBannerText.gameObject.SetActive(false);
+    }
+
+    private void CreateSpeedButton(Transform parent)
+    {
+        _speedButton = CreateButton(parent as RectTransform, "1x", null, 0, 1);
+        RectTransform rect = _speedButton.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(.14f, .88f); rect.anchorMax = new Vector2(.27f, .95f);
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        CenterButtonLabel(_speedButton);
+        _speedLabel = _speedButton.GetComponentInChildren<TextMeshProUGUI>();
+        _speedButton.onClick.AddListener(CycleSpeed);
+    }
+
+    private void CycleSpeed()
+    {
+        SfxManager.Instance?.PlayButtonClick();
+        _speedIndex = (_speedIndex + 1) % SpeedCycle.Length;
+        _activeTimeScale = SpeedCycle[_speedIndex];
+        if (!_isPaused) Time.timeScale = _activeTimeScale;
+        if (_speedLabel != null) _speedLabel.text = _activeTimeScale + "x";
+    }
+
+    private void CreatePausePanel(Transform parent)
+    {
+        RectTransform panel = CreatePanel("Pause Panel", parent, new Color(0f, 0f, 0f, .85f));
+        panel.anchorMin = Vector2.zero; panel.anchorMax = Vector2.one; panel.offsetMin = panel.offsetMax = Vector2.zero;
+        _pausePanel = panel.gameObject;
+
+        CreateText("PAUSED", panel, 56, TextAnchor.MiddleCenter, new Vector2(.25f, .58f), new Vector2(.75f, .7f));
+
+        Button resume = CreateButton(panel, "Resume Button", null, 0, 1);
+        RectTransform resumeRect = resume.GetComponent<RectTransform>();
+        resumeRect.anchorMin = new Vector2(.42f, .45f); resumeRect.anchorMax = new Vector2(.58f, .53f);
+        resumeRect.offsetMin = resumeRect.offsetMax = Vector2.zero;
+        CenterButtonLabel(resume);
+        resume.GetComponentInChildren<TextMeshProUGUI>().text = "RESUME";
+        resume.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); TogglePause(); });
+
+        Button restart = CreateButton(panel, "Restart Button", null, 0, 1);
+        RectTransform restartRect = restart.GetComponent<RectTransform>();
+        restartRect.anchorMin = new Vector2(.42f, .33f); restartRect.anchorMax = new Vector2(.58f, .41f);
+        restartRect.offsetMin = restartRect.offsetMax = Vector2.zero;
+        CenterButtonLabel(restart);
+        restart.GetComponent<Image>().color = new Color(.5f, .14f, .1f, 1f);
+        restart.GetComponentInChildren<TextMeshProUGUI>().text = "RESTART";
+        restart.onClick.AddListener(() =>
+        {
+            SfxManager.Instance?.PlayButtonClick();
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        });
+
+        _pausePanel.SetActive(false);
+    }
+
+    private void TogglePause()
+    {
+        _isPaused = !_isPaused;
+        Time.timeScale = _isPaused ? 0f : _activeTimeScale;
+        if (_pausePanel != null) _pausePanel.SetActive(_isPaused);
+    }
+
+    private void HandlePauseInput()
+    {
+        if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (CartageHeart.HasBeenDestroyed) return; // GameOverController already owns timeScale at that point.
+        TogglePause();
+    }
+
+    // Bottom-right of the HUD row was empty (health bar only spans .38-.62) — a natural home for wave info.
+    private void CreateIncomingPanel(Transform parent)
+    {
+        RectTransform bar = CreatePanel("Ships Incoming", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        bar.anchorMin = new Vector2(.64f, .015f);
+        bar.anchorMax = new Vector2(.98f, .075f);
+        bar.offsetMin = bar.offsetMax = Vector2.zero;
+
+        _incomingText = CreateText(string.Empty, bar, 14, TextAnchor.MiddleCenter, new Vector2(.04f, .1f), new Vector2(.96f, .9f));
+        _incomingText.color = new Color(1f, .55f, .5f, 1f);
+    }
+
+    private void CreateCountdownBanner(Transform parent)
+    {
+        GameObject textObject = new GameObject("Wave Countdown", typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(parent, false);
+        _countdownText = textObject.GetComponent<TextMeshProUGUI>();
+        _countdownText.fontSize = 160;
+        _countdownText.fontStyle = FontStyles.Bold;
+        _countdownText.alignment = TextAlignmentOptions.Center;
+        _countdownText.color = new Color(1f, .85f, .3f, 1f);
+        _countdownText.enableWordWrapping = false;
+        _countdownText.overflowMode = TextOverflowModes.Overflow;
+        _countdownRect = _countdownText.rectTransform;
+        _countdownRect.anchorMin = new Vector2(.3f, .35f);
+        _countdownRect.anchorMax = new Vector2(.7f, .65f);
+        _countdownRect.offsetMin = _countdownRect.offsetMax = Vector2.zero;
+        _countdownText.gameObject.SetActive(false);
     }
 
     private void CreateTimerPanel(Transform parent)
@@ -127,6 +335,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         GameObject fillObject = new GameObject("Fill", typeof(Image));
         fillObject.transform.SetParent(healthBackground, false);
         Image fillImage = fillObject.GetComponent<Image>();
+        fillImage.sprite = FloatingHealthBar.GetSolidSprite();
         fillImage.color = new Color(.8f, .18f, .16f, 1f);
         fillImage.type = Image.Type.Filled;
         fillImage.fillMethod = Image.FillMethod.Horizontal;
@@ -139,9 +348,99 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void Update()
     {
+        HandlePauseInput();
         RefreshStatusBar();
         RefreshStartWaveButton();
         RefreshHud();
+        RefreshIncoming();
+        RefreshCountdown();
+        HandleClickFeedback();
+    }
+
+    private void RefreshIncoming()
+    {
+        if (_incomingText == null) return;
+        int queued = GameManger.Instance != null ? GameManger.Instance.ShipsQueuedThisWave : 0;
+        int alive = 0;
+        foreach (RomanShipHealth ship in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
+            if (!ship.IsDestroyed) alive++;
+        int total = queued + alive;
+        _incomingText.text = total > 0 ? "Roman ships incoming: " + total : "No ships incoming";
+    }
+
+    // Big animated number for the last few seconds before a wave auto-starts, punching in fresh each time
+    // the displayed integer changes rather than replaying continuously.
+    private void RefreshCountdown()
+    {
+        if (_countdownText == null) return;
+        // Covers both paths that lead into a wave: the (usually much longer) auto-start idle countdown,
+        // and the short pre-wave delay that also runs after a manual Start-Wave click — previously only
+        // the auto-start path was hooked up, so clicking Start skipped the big 3-2-1 entirely.
+        bool autoPending = GameManger.Instance != null && GameManger.Instance.IsAutoStartPending;
+        bool preWavePending = GameManger.Instance != null && GameManger.Instance.IsPreWaveDelayActive;
+        bool pending = autoPending || preWavePending;
+        float remaining = autoPending ? GameManger.Instance.AutoStartTimeRemaining : preWavePending ? GameManger.Instance.PreWaveDelayRemaining : 0f;
+        int shown = pending && remaining <= 3.5f ? Mathf.CeilToInt(remaining) : -1;
+        if (shown == _lastCountdownShown) return;
+        _lastCountdownShown = shown;
+        if (shown <= 0) { _countdownText.gameObject.SetActive(false); return; }
+        _countdownText.gameObject.SetActive(true);
+        _countdownText.text = shown.ToString();
+        if (_countdownPunchRoutine != null) StopCoroutine(_countdownPunchRoutine);
+        _countdownPunchRoutine = StartCoroutine(PunchCountdown());
+    }
+
+    // Genuine pop IN (overshoot scale-up from nothing) then pop OUT (shrink + fade) rather than just
+    // settling at scale 1 and cutting — sized to fit roughly the ~1s window before the next number.
+    private IEnumerator PunchCountdown()
+    {
+        const float popInDuration = .22f;
+        const float holdDuration = .5f;
+        const float popOutDuration = .25f;
+
+        float elapsed = 0f;
+        while (elapsed < popInDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            _countdownRect.localScale = Vector3.one * EaseOutBack(Mathf.Clamp01(elapsed / popInDuration));
+            SetCountdownAlpha(1f);
+            yield return null;
+        }
+        _countdownRect.localScale = Vector3.one;
+        SetCountdownAlpha(1f);
+        yield return new WaitForSecondsRealtime(holdDuration);
+
+        elapsed = 0f;
+        while (elapsed < popOutDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / popOutDuration);
+            _countdownRect.localScale = Vector3.one * Mathf.Lerp(1f, .3f, t);
+            SetCountdownAlpha(1f - t);
+            yield return null;
+        }
+        _countdownRect.localScale = Vector3.one;
+    }
+
+    private void SetCountdownAlpha(float alpha) => SetTextAlpha(_countdownText, alpha);
+
+    private static float EaseOutBack(float t)
+    {
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+        float shifted = t - 1f;
+        return 1f + c3 * shifted * shifted * shifted + c1 * shifted * shifted;
+    }
+
+    // Pure visual feedback — a tiny spark wherever the player clicks, regardless of what (if anything) it hits.
+    private void HandleClickFeedback()
+    {
+        if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+        Camera cam = Camera.main;
+        if (cam == null) return;
+        if (Physics.Raycast(cam.ScreenPointToRay(Mouse.current.position.ReadValue()), out RaycastHit hit, 500f))
+            CombatFx.PlayClickSpark(hit.point);
     }
 
     private void RefreshHud()
@@ -152,14 +451,52 @@ public class CarthaginianBuildMenu : MonoBehaviour
             int current = heart != null ? Mathf.Max(0, heart.CurrentHealth) : 0;
             int max = heart != null && heart.MaxHealth > 0 ? heart.MaxHealth : 1;
             _heartText.text = "Heart: " + current + " / " + max;
-            if (_heartFill != null) _heartFill.fillAmount = (float)current / max;
+            float targetFraction = (float)current / max;
+            if (_heartFill != null && !Mathf.Approximately(targetFraction, _heartFillTarget))
+            {
+                _heartFillTarget = targetFraction;
+                if (_heartFillRoutine != null) StopCoroutine(_heartFillRoutine);
+                _heartFillRoutine = StartCoroutine(AnimateHeartFill(targetFraction));
+            }
         }
 
         if (_timerText == null) return;
-        if (GameManger.Instance != null && GameManger.Instance.IsWaveRunning) _timerText.text = "Wave in progress";
-        else if (GameManger.Instance != null && GameManger.Instance.IsAutoStartPending)
-            _timerText.text = "Next wave: " + Mathf.CeilToInt(GameManger.Instance.AutoStartTimeRemaining) + "s";
-        else _timerText.text = string.Empty;
+        if (GameManger.Instance != null && GameManger.Instance.IsWaveRunning)
+        {
+            _timerText.text = "Wave in progress: " + FormatTime(Time.time - _waveStartTime);
+        }
+        else if (GameManger.Instance != null && (GameManger.Instance.IsAutoStartPending || GameManger.Instance.IsPreWaveDelayActive))
+        {
+            float remaining = GameManger.Instance.IsAutoStartPending ? GameManger.Instance.AutoStartTimeRemaining : GameManger.Instance.PreWaveDelayRemaining;
+            _timerText.text = "Next wave: " + Mathf.CeilToInt(remaining) + "s";
+        }
+        else
+        {
+            // Never blank — before the first wave (or with auto-start off and nothing queued yet) this
+            // just ticks as a plain session clock instead of leaving the field empty.
+            _timerText.text = "Time: " + FormatTime(Time.time);
+        }
+    }
+
+    private static string FormatTime(float seconds)
+    {
+        int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        return (total / 60) + ":" + (total % 60).ToString("00");
+    }
+
+    private IEnumerator AnimateHeartFill(float target)
+    {
+        float start = _heartFill.fillAmount;
+        const float duration = .35f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            _heartFill.fillAmount = Mathf.Lerp(start, target, Mathf.Clamp01(elapsed / duration));
+            yield return null;
+        }
+        _heartFill.fillAmount = target;
+        _heartFillRoutine = null;
     }
 
     private void RefreshStartWaveButton()
@@ -206,6 +543,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         bool placesOnStationarySlot = definition.prefab != null && definition.prefab.GetComponent<CarthaginianDragonTower>() != null;
         button.onClick.AddListener(() =>
         {
+            SfxManager.Instance?.PlayButtonClick();
             if (placesOnStationarySlot) { if (dragonPlacementController != null) dragonPlacementController.SelectDragon(definition); }
             else { dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectTower(definition); }
         });
@@ -215,7 +553,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private void CreateResourceButton(RectTransform parent, CarthaginianResourceDefinition definition, int index, int count)
     {
         Button button = CreateButton(parent, definition.buildingName, definition.icon, index, count);
-        button.onClick.AddListener(() => { dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectResourceTower(definition); });
+        button.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectResourceTower(definition); });
         AddTooltip(button.gameObject, BuildResourceTooltip(definition));
     }
 
@@ -255,7 +593,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         rect.anchorMin = new Vector2(0f, .88f); rect.anchorMax = new Vector2(.13f, .95f);
         rect.offsetMin = new Vector2(18f, 0f); rect.offsetMax = Vector2.zero;
         CenterButtonLabel(button);
-        button.onClick.AddListener(ToggleMenu);
+        button.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); ToggleMenu(); });
     }
 
     private void CreateStatusBar(Transform parent)

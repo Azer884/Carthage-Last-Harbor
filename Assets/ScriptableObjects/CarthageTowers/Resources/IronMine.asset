@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarthaginianResourceDefinition
   buildingName: Iron Mine
   description: 
-  prefab: {fileID: 0}
+  prefab: {fileID: 100003000001, guid: c3d4e5f647a8b9c0d1e2f3a4b5c6d7e8, type: 3}
   environment: 1
   requiredZoneId: IronHills
   resource: 1

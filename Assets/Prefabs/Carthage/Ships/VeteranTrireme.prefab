@@ -12,11 +12,10 @@ GameObject:
   - component: {fileID: 4647694430695594187}
   - component: {fileID: 6523632553427105454}
   - component: {fileID: 6852556243905383152}
-  - component: {fileID: 7999163198122369220}
   - component: {fileID: 767174590034254999}
   - component: {fileID: 7903452521857009984}
   - component: {fileID: 7357008439757514306}
-  - component: {fileID: 9032841953846027972}
+  - component: {fileID: 916099064154569365}
   m_Layer: 0
   m_Name: VeteranTrireme
   m_TagString: CartageShip
@@ -117,21 +116,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7999163198122369220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5639563526874707969}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a12d51adc492b9241a3c6460a09822ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTarget
-  targetType: 0
-  maxHealth: 10
-  destroyGameObjectOnDeath: 1
 --- !u!114 &767174590034254999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,7 +169,9 @@ MonoBehaviour:
   attackDamage: 9
   attackCooldown: 1.1
   combatClass: 1
---- !u!114 &9032841953846027972
+  separationRadius: 3.5
+  separationStrength: 1.5
+--- !u!114 &916099064154569365
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -194,7 +180,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5639563526874707969}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94b795365bd1b5e4284d82496646c0cc, type: 3}
+  m_Script: {fileID: 11500000, guid: e4ccd8344c43080408f0459441c6322e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianShipCrew
-  returnSurvivingCrewToRoster: 1
+  m_EditorClassIdentifier: Assembly-CSharp::ShipBuoyancy
+  bobAmplitude: 0.18
+  bobPeriod: 4.2
+  swayDegrees: 3.5
+  swayPeriod: 5.5

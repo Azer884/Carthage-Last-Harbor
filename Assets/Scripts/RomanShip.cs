@@ -22,6 +22,7 @@ public class RomanShip : MonoBehaviour
     private bool _isEngaging;
     private bool _isReturningToSpline;
     private bool _isAligningWithSpline;
+    private bool _reachedPathEnd;
     private Vector3 _returnPoint;
     private float _returnNormalizedTime;
     private Quaternion _splineRotation;
@@ -30,12 +31,23 @@ public class RomanShip : MonoBehaviour
     private const float TargetSearchInterval = 0.25f;
     private float _nextTargetSearchTime;
 
+    // 0 at the spawn point, 1 at the spline's end (by the heart) — lets defenders prioritize whichever
+    // Roman ship is furthest along its route rather than just whichever happens to be physically nearest.
+    public float PathProgress => _splineAnimate != null ? _splineAnimate.NormalizedTime : 0f;
+
     private void Awake()
     {
         if (shipData != null)
         {
             AssignShip(shipData);
         }
+        if (GetComponent<ShipBuoyancy>() == null) gameObject.AddComponent<ShipBuoyancy>();
+        ShipWakeTrail.Attach(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (_splineAnimate != null) _splineAnimate.Completed -= OnPathCompleted;
     }
 
     public void AssignShip(RomeShip ship)
@@ -50,7 +62,7 @@ public class RomanShip : MonoBehaviour
         _mesh = ship.mesh;
         _speed = ship.speed;
         _useLongRangeAttack = ship.hasLongRangeAttack && Random.value <= ship.longRangeAttackChance;
-        
+
         _splineAnimate = GetComponent<SplineAnimate>();
         if (_splineAnimate == null)
         {
@@ -59,6 +71,11 @@ public class RomanShip : MonoBehaviour
         }
 
         _splineAnimate.MaxSpeed = _speed;
+        // Must be Once (not the default Loop) so Completed actually fires — that's how this ship knows
+        // it has reached the heart and should start attacking, rather than sailing straight through it.
+        _splineAnimate.Loop = SplineAnimate.LoopMode.Once;
+        _splineAnimate.Completed -= OnPathCompleted;
+        _splineAnimate.Completed += OnPathCompleted;
         _pathContainer = null;
         if (GameManger.Instance != null)
         {
@@ -91,9 +108,25 @@ public class RomanShip : MonoBehaviour
         _preferTowers = preferTowers;
     }
 
+    // Ships never break off toward the heart mid-journey — they only commit to attacking it once they've
+    // actually arrived, so a long-range ship reliably gets to stand off and fire instead of the old
+    // behaviour of sometimes lunging at the heart early from an inconsistent, half-arrived state.
+    private void OnPathCompleted()
+    {
+        _reachedPathEnd = true;
+    }
+
     private void Update()
     {
-        if (shipData == null || !_canLeaveSpline)
+        if (shipData == null) return;
+
+        if (_reachedPathEnd)
+        {
+            EngageHeart();
+            return;
+        }
+
+        if (!_canLeaveSpline)
             return;
 
         if (_isReturningToSpline)
@@ -130,6 +163,15 @@ public class RomanShip : MonoBehaviour
         EngageTarget();
     }
 
+    private void EngageHeart()
+    {
+        if (CartageHeart.Instance == null || CartageHeart.Instance.IsDestroyed) return;
+        _target = CartageHeart.Instance;
+        EngageTarget();
+    }
+
+    // Never considers the heart — that's handled exclusively by EngageHeart() once the ship's path is
+    // actually complete, so a ship can't snipe the heart early from mid-journey.
     private ICombatTarget FindBestTarget()
     {
         float detectionRange = shipData.viewRange;
@@ -142,9 +184,6 @@ public class RomanShip : MonoBehaviour
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 
         foreach (CarthaginianShipCrew candidate in FindObjectsByType<CarthaginianShipCrew>())
-            ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
-
-        foreach (CartageHeart candidate in FindObjectsByType<CartageHeart>())
             ConsiderTarget(candidate, detectionRange, ref preferred, ref preferredDistance, ref fallback, ref fallbackDistance);
 
         return preferred ?? fallback;
@@ -197,9 +236,32 @@ public class RomanShip : MonoBehaviour
             return;
 
         _nextAttackTime = Time.time + shipData.attackCooldown;
+        Fire(_target, targetPosition);
+    }
+
+    // Spawns an actual travelling projectile when the ship data has one assigned; otherwise falls back to
+    // an instant hit with an impact spark, same graceful-degradation pattern the Dragon's fireball uses.
+    private void Fire(ICombatTarget target, Vector3 targetPosition)
+    {
         float damage = shipData.attackPower * GetCounterMultiplier();
-        _target.TakeDamage(damage);
-        FloatingCombatText.Spawn(targetPosition, "-" + Mathf.CeilToInt(damage), new Color(1f, .82f, .25f));
+        Vector3 origin = transform.position + Vector3.up * 1.5f;
+        CombatFx.PlayImpactSpark(origin);
+        SfxManager.Instance?.PlayShipAttack();
+
+        if (shipData.projectilePrefab == null)
+        {
+            target.TakeDamage(damage);
+            FloatingCombatText.Spawn(targetPosition, "-" + Mathf.CeilToInt(damage), new Color(1f, .82f, .25f));
+            CombatFx.PlayImpactSpark(targetPosition);
+            CameraShake.Shake(.08f);
+            return;
+        }
+
+        Vector3 aim = targetPosition - origin;
+        GameObject projectileObject = Instantiate(shipData.projectilePrefab, origin, aim.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(aim) : Quaternion.identity);
+        RomanProjectile projectile = projectileObject.GetComponent<RomanProjectile>();
+        if (projectile == null) projectile = projectileObject.AddComponent<RomanProjectile>();
+        projectile.Launch(target, damage);
     }
 
     private float GetCounterMultiplier()

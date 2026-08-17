@@ -14,6 +14,8 @@ public class DragonTowerPlacementController : MonoBehaviour
     [SerializeField] private TowerPlacementController freePlacementController;
 
     private CarthaginianTowerDefinition _selectedDragon;
+    private GameObject _preview;
+    private MaterialPropertyBlock _previewProperties;
     public bool IsPlacing => _selectedDragon != null;
 
     private void Awake()
@@ -26,24 +28,28 @@ public class DragonTowerPlacementController : MonoBehaviour
         if (freePlacementController != null) freePlacementController.CancelPlacement();
         _selectedDragon = dragon;
         SetSlotGlow(true);
+        CreatePreview(dragon != null ? dragon.prefab : null);
     }
 
     public void CancelPlacement()
     {
         SetSlotGlow(false);
         _selectedDragon = null;
+        if (_preview != null) Destroy(_preview);
+        _preview = null;
     }
 
     private void Update()
     {
         if (!IsPlacing || Mouse.current == null) return;
         if (Mouse.current.rightButton.wasPressedThisFrame) { CancelPlacement(); return; }
-        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
         Camera cam = placementCamera != null ? placementCamera : Camera.main;
-        if (cam == null) return;
+        if (cam == null) { SetPreviewVisible(false); return; }
         GameObject slot = FindSlotUnderPointer(cam, Mouse.current.position.ReadValue());
-        if (slot == null || IsOccupied(slot)) { SfxManager.Instance?.PlayPlacementInvalid(); return; }
+        bool valid = slot != null && !IsOccupied(slot);
+        UpdatePreview(slot, valid);
+        if (!Mouse.current.leftButton.wasPressedThisFrame || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) return;
+        if (!valid) { SfxManager.Instance?.PlayPlacementInvalid(); return; }
         TryPlace(slot);
     }
 
@@ -54,7 +60,8 @@ public class DragonTowerPlacementController : MonoBehaviour
         CarthaginianDragonTower dragonPrefabComponent = _selectedDragon.prefab.GetComponent<CarthaginianDragonTower>();
         Vector3 offset = dragonPrefabComponent != null ? dragonPrefabComponent.PlacementOffset : Vector3.zero;
         Vector3 position = slot.transform.TransformPoint(offset);
-        GameObject dragon = Instantiate(_selectedDragon.prefab, position, slot.transform.rotation, slot.transform);
+        GameObject dragon = Instantiate(_selectedDragon.prefab, position, _selectedDragon.prefab.transform.rotation, slot.transform);
+        MatchPrefabWorldScale(dragon.transform, _selectedDragon.prefab.transform.localScale, slot.transform);
         TowerSelectionManager.EnsureSelectableCollider(dragon);
         CarthaginianTower runtimeTower = dragon.GetComponent<CarthaginianTower>();
         if (runtimeTower != null) runtimeTower.Initialize(_selectedDragon);
@@ -70,6 +77,21 @@ public class DragonTowerPlacementController : MonoBehaviour
         return true;
     }
 
+    // Instantiate(prefab, position, rotation, parent) carries the prefab's own localScale over as-is; once
+    // parented under a slot with a non-1 scale (e.g. a scaled-down piece of an imported port model), the
+    // dragon's world size would shrink/stretch by that factor. Divide it back out so the dragon always ends
+    // up at the size it was authored at, regardless of what it's standing on.
+    private static void MatchPrefabWorldScale(Transform instance, Vector3 prefabLocalScale, Transform parent)
+    {
+        Vector3 parentScale = parent != null ? parent.lossyScale : Vector3.one;
+        instance.localScale = new Vector3(
+            SafeDivide(prefabLocalScale.x, parentScale.x),
+            SafeDivide(prefabLocalScale.y, parentScale.y),
+            SafeDivide(prefabLocalScale.z, parentScale.z));
+    }
+
+    private static float SafeDivide(float a, float b) => Mathf.Abs(b) > 0.0001f ? a / b : a;
+
     private GameObject FindSlotUnderPointer(Camera camera, Vector2 screenPoint)
     {
         RaycastHit[] hits = Physics.RaycastAll(camera.ScreenPointToRay(screenPoint), 500f, ~0, QueryTriggerInteraction.Collide);
@@ -83,7 +105,27 @@ public class DragonTowerPlacementController : MonoBehaviour
                 current = current.parent;
             }
         }
-        return null;
+        // The tagged pieces are chunks of an imported model and can be small/oddly shaped, so an exact
+        // raycast miss doesn't necessarily mean the player wasn't aiming at one — fall back to whichever
+        // slot's screen position is closest to the cursor, same forgiving-click idea TowerSelectionManager
+        // already uses for buildings.
+        return FindSlotNearScreenPoint(camera, screenPoint);
+    }
+
+    private GameObject FindSlotNearScreenPoint(Camera camera, Vector2 screenPoint)
+    {
+        GameObject closest = null;
+        float closestPixels = 60f;
+        foreach (GameObject slot in GameObject.FindGameObjectsWithTag(SlotTag))
+        {
+            Vector3 projected = camera.WorldToScreenPoint(slot.transform.position);
+            if (projected.z <= 0f) continue;
+            float pixels = Vector2.Distance(screenPoint, new Vector2(projected.x, projected.y));
+            if (pixels >= closestPixels) continue;
+            closest = slot;
+            closestPixels = pixels;
+        }
+        return closest;
     }
 
     public static bool IsOccupied(GameObject slot) => slot != null && slot.GetComponentInChildren<CarthaginianDragonTower>() != null;
@@ -96,6 +138,53 @@ public class DragonTowerPlacementController : MonoBehaviour
             if (outline == null) continue;
             outline.enabled = glow && !IsOccupied(slot);
         }
+    }
+
+    private void CreatePreview(GameObject prefab)
+    {
+        if (_preview != null) Destroy(_preview);
+        if (prefab == null) { _preview = null; return; }
+        _preview = Instantiate(prefab);
+        _preview.name = "Dragon Placement Preview (not built)";
+        foreach (MonoBehaviour behaviour in _preview.GetComponentsInChildren<MonoBehaviour>()) behaviour.enabled = false;
+        foreach (CarthaginianTarget target in _preview.GetComponentsInChildren<CarthaginianTarget>()) target.SetTargetable(false);
+        foreach (Collider collider in _preview.GetComponentsInChildren<Collider>()) collider.enabled = false;
+        foreach (Renderer renderer in _preview.GetComponentsInChildren<Renderer>())
+            foreach (Material material in renderer.materials)
+            {
+                // URP Lit uses these properties; harmless for other shaders and keeps the ghost see-through.
+                if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+                if (material.HasProperty("_Blend")) material.SetFloat("_Blend", 0f);
+                material.renderQueue = 3000;
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            }
+        SetPreviewVisible(false);
+    }
+
+    private void UpdatePreview(GameObject slot, bool valid)
+    {
+        if (_preview == null) return;
+        if (!valid || slot == null) { SetPreviewVisible(false); return; }
+        CarthaginianDragonTower dragonPrefabComponent = _selectedDragon != null && _selectedDragon.prefab != null ? _selectedDragon.prefab.GetComponent<CarthaginianDragonTower>() : null;
+        Vector3 offset = dragonPrefabComponent != null ? dragonPrefabComponent.PlacementOffset : Vector3.zero;
+        _preview.transform.position = slot.transform.TransformPoint(offset);
+        _preview.transform.rotation = _selectedDragon.prefab.transform.rotation;
+        MatchPrefabWorldScale(_preview.transform, _selectedDragon.prefab.transform.localScale, slot.transform);
+        SetPreviewVisible(true);
+        if (_previewProperties == null) _previewProperties = new MaterialPropertyBlock();
+        Color color = new Color(.1f, 1f, .25f, .48f);
+        foreach (Renderer renderer in _preview.GetComponentsInChildren<Renderer>())
+        {
+            _previewProperties.Clear();
+            _previewProperties.SetColor("_BaseColor", color);
+            _previewProperties.SetColor("_Color", color);
+            renderer.SetPropertyBlock(_previewProperties);
+        }
+    }
+
+    private void SetPreviewVisible(bool visible)
+    {
+        if (_preview != null && _preview.activeSelf != visible) _preview.SetActive(visible);
     }
 
     private void OnDisable() { CancelPlacement(); }

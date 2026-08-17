@@ -26,4 +26,4 @@ MonoBehaviour:
   longRangeAttackRange: 60
   longRangeAttackChance: 0.8
   attackCooldown: 1.5
-  speed: 3.5
+  speed: 2.4

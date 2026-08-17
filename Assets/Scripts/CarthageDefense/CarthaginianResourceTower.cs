@@ -5,10 +5,13 @@ public class CarthaginianResourceTower : MonoBehaviour
 {
     [SerializeField] private CarthaginianResourceDefinition definition;
     [SerializeField] private bool automaticallySell = true;
+    [Tooltip("Cosmetic only — how far the selection panel's extraction-range ring is drawn. Production isn't actually limited to this radius.")]
+    [SerializeField, Min(1f)] private float displayRange = 10f;
     private bool _isStaffed;
     private float _nextProductionTime;
     private int _storedUnits;
 
+    public float DisplayRange => displayRange;
     public CarthaginianResourceDefinition Definition => definition;
     public bool IsStaffed => _isStaffed;
     public int StoredUnits => _storedUnits;

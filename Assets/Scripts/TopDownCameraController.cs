@@ -18,6 +18,9 @@ public class TopDownCameraController : MonoBehaviour
     [SerializeField] private bool useMapBounds = true;
     [SerializeField] private Vector2 minimumMapPosition = new Vector2(-25f, -25f);
     [SerializeField] private Vector2 maximumMapPosition = new Vector2(25f, 25f);
+    public bool UsesMapBounds => useMapBounds;
+    public Vector2 MinimumMapPosition => minimumMapPosition;
+    public Vector2 MaximumMapPosition => maximumMapPosition;
     [Header("Mouse Look")]
     [SerializeField] private bool lookAtMouse = true;
     [SerializeField, Min(-1000f)] private float mouseLookPlaneY;

@@ -108,6 +108,7 @@ public class MercenaryMarket : MonoBehaviour
         FloatingCombatText.Spawn(position, "-" + cost, new Color(1f, .35f, .3f));
         FloatingCombatText.Spawn(position + Vector3.up * .6f, "+" + quantity + " " + offer.rank, new Color(.35f, 1f, .3f));
         SfxManager.Instance?.PlayCoinSpent();
+        SfxManager.Instance?.PlayCrewBought();
         MarketChanged?.Invoke();
         return true;
     }
@@ -127,6 +128,7 @@ public class MercenaryMarket : MonoBehaviour
         FloatingCombatText.Spawn(position, "+" + quantity + " " + offer.rank, new Color(.35f, 1f, .3f));
         FloatingCombatText.Spawn(position + Vector3.up * .6f, "debt +" + cost, new Color(1f, .6f, .2f));
         SfxManager.Instance?.PlayCoinSpent();
+        SfxManager.Instance?.PlayCrewBought();
         MarketChanged?.Invoke();
         return true;
     }

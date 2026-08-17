@@ -10,6 +10,8 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
     [SerializeField] private bool returnSurvivingCrewToRoster = true;
     private CrewCount[] _crew = new CrewCount[0];
     private float _health;
+    private float _maxHealth;
+    private FloatingHealthBar _healthBar;
     public Transform TargetTransform => transform;
     public CarthaginianTargetType TargetType => CarthaginianTargetType.Ship;
     public bool IsDestroyed => _health <= 0f;
@@ -35,15 +37,36 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
         _crew = crew ?? new CrewCount[0];
         _health = 0f;
         foreach (CrewCount count in _crew) _health += count.amount;
+        _maxHealth = _health;
+        EnsureHealthBar();
+    }
+
+    // This — not CarthaginianTarget — is a Carthaginian ship's real health authority, so the floating bar
+    // belongs here, tracking actual crew count rather than a separate, unrelated fixed health value.
+    private void EnsureHealthBar()
+    {
+        if (_healthBar != null) { _healthBar.SetFraction(_maxHealth > 0f ? _health / _maxHealth : 0f); return; }
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        float top = 1.2f;
+        if (renderers.Length > 0)
+        {
+            Bounds bounds = renderers[0].bounds;
+            foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
+            top = bounds.max.y - transform.position.y + .4f;
+        }
+        _healthBar = FloatingHealthBar.Attach(transform, top);
+        _healthBar.SetFraction(1f);
     }
 
     public void TakeDamage(float damage)
     {
         if (IsDestroyed || damage <= 0f) return;
         _health = Mathf.Max(0f, _health - damage);
+        if (_healthBar != null) _healthBar.SetFraction(_maxHealth > 0f ? _health / _maxHealth : 0f);
         if (IsDestroyed)
         {
-            CombatFx.PlayExplosion(transform.position);
+            CombatFx.PlayExplosion(transform.position, 1.3f);
+            CameraShake.Shake(.4f);
             SfxManager.Instance?.PlayShipDestroyed();
             Destroy(gameObject);
         }

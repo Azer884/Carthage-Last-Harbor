@@ -49,7 +49,8 @@ public class DragonFireball : MonoBehaviour
             ship.TakeDamage(_damage);
             FloatingCombatText.Spawn(ship.transform.position, "-" + Mathf.CeilToInt(_damage), new Color(1f, .55f, .12f));
         }
-        CombatFx.PlayExplosion(impactPoint);
+        CombatFx.PlayExplosion(impactPoint, 1.2f);
+        CameraShake.Shake(.15f);
         Destroy(gameObject);
     }
 }

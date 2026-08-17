@@ -21,4 +21,6 @@ public class RomeShip : ScriptableObject
     [Range(0f, 1f)] public float longRangeAttackChance = 0.5f;
     [Min(0.01f)] public float attackCooldown = 1f;
     public float speed;
+    [Tooltip("Optional. If assigned, attacks spawn this and it travels to the target (auto-gets a RomanProjectile component if it doesn't have one). Leave empty for an instant hit with just an impact spark.")]
+    public GameObject projectilePrefab;
 }

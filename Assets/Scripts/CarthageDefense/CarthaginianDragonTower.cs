@@ -40,6 +40,7 @@ public class CarthaginianDragonTower : MonoBehaviour
 
     private void Fire(DragonTowerLevel stats, RomanShipHealth target)
     {
+        SfxManager.Instance?.PlayDragonAttack();
         Vector3 origin = muzzle != null ? muzzle.position : transform.position + Vector3.up * 2f;
         if (stats.projectilePrefab == null)
         {
@@ -47,6 +48,7 @@ public class CarthaginianDragonTower : MonoBehaviour
             target.TakeDamage(stats.damage);
             FloatingCombatText.Spawn(target.transform.position, "-" + Mathf.CeilToInt(stats.damage), new Color(1f, .55f, .12f));
             CombatFx.PlayExplosion(target.transform.position);
+            CameraShake.Shake(.15f);
             return;
         }
         Vector3 aim = target.transform.position - origin;
@@ -56,16 +58,20 @@ public class CarthaginianDragonTower : MonoBehaviour
         fireball.Launch(target, stats.damage, stats.splashRadius, stats.projectileSpeed);
     }
 
+    // Among Roman ships within sight range, engage whichever is furthest along its spline toward the
+    // heart (not just whichever happens to be physically closest to this tower).
     private RomanShipHealth FindTarget(float range)
     {
-        RomanShipHealth closest = null; float closestDistance = range;
+        RomanShipHealth best = null; float bestProgress = -1f;
         foreach (RomanShipHealth candidate in FindObjectsByType<RomanShipHealth>(FindObjectsSortMode.None))
         {
             if (candidate.IsDestroyed) continue;
-            float distance = Vector3.Distance(transform.position, candidate.transform.position);
-            if (distance < closestDistance) { closest = candidate; closestDistance = distance; }
+            if (Vector3.Distance(transform.position, candidate.transform.position) > range) continue;
+            RomanShip romanShip = candidate.GetComponent<RomanShip>();
+            float progress = romanShip != null ? romanShip.PathProgress : 0f;
+            if (progress > bestProgress) { best = candidate; bestProgress = progress; }
         }
-        return closest;
+        return best;
     }
 
     private void Face(Vector3 targetPosition)

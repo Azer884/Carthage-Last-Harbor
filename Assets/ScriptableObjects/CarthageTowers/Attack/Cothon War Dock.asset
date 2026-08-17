@@ -16,9 +16,9 @@ MonoBehaviour:
   description: A military dock for tougher ramming ships and naval escorts.
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   category: 0
-  prefab: {fileID: 4672277572902736373, guid: 6f1a9617d2e0ced4296e0a18da912dbb, type: 3}
+  prefab: {fileID: 100001000001, guid: a1b2c3d4e5f647a8b9c0d1e2f3a4b5c6, type: 3}
   buildCost: 50
-  requiredZoneId: 
+  requiredZoneId:
   levels:
   - title: I
     upgradeCost: 75

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +6,6 @@ using UnityEngine.UI;
 public class FloatingCombatText : MonoBehaviour
 {
     private static Canvas _canvas;
-    private static readonly List<FloatingCombatText> _active = new List<FloatingCombatText>();
 
     [SerializeField] private float lifetime = 1.1f;
     [SerializeField] private float riseSpeed = 1.1f;
@@ -33,22 +31,27 @@ public class FloatingCombatText : MonoBehaviour
 
         FloatingCombatText floating = obj.AddComponent<FloatingCombatText>();
         floating._text = text;
-        floating._worldPosition = worldPosition + StackOffset(worldPosition);
-        _active.Add(floating);
+        floating._worldPosition = worldPosition + RandomNearbyOffset();
+        // Placed immediately instead of waiting for the first Update() — otherwise the RectTransform sits
+        // at its default (canvas-center) position for one frame and visibly teleports to the right spot.
+        floating.UpdateScreenPosition();
     }
 
-    // Staggers texts that spawn at nearly the same spot at nearly the same time, so repeated hits
-    // (several ships damaging one target, several popups off one point) don't render on top of each other.
-    private static Vector3 StackOffset(Vector3 worldPosition)
+    // Random offset close to the spawn point, with a guaranteed minimum radius so repeated hits at the
+    // same spot (several ships damaging one target, several popups off one point) never land exactly on
+    // top of each other regardless of how many texts are already active nearby.
+    private static Vector3 RandomNearbyOffset()
     {
-        float vertical = 0f;
-        foreach (FloatingCombatText other in _active)
-        {
-            if (other == null) continue;
-            if (Vector3.Distance(other._worldPosition, worldPosition) < 1.5f) vertical += .5f;
-        }
-        Vector2 jitter = Random.insideUnitCircle * .35f;
-        return new Vector3(jitter.x, vertical, jitter.y);
+        Camera camera = Camera.main;
+        Vector3 right = camera != null ? camera.transform.right : Vector3.right;
+        right.y = 0f;
+        if (right.sqrMagnitude < 0.0001f) right = Vector3.right; else right.Normalize();
+
+        float angle = Random.value * Mathf.PI * 2f;
+        float radius = Random.Range(.45f, 1f);
+        Vector3 horizontal = right * (Mathf.Cos(angle) * radius);
+        float vertical = Random.Range(.15f, .7f) + Mathf.Abs(Mathf.Sin(angle)) * radius * .3f;
+        return horizontal + Vector3.up * vertical;
     }
 
     private static void EnsureCanvas()
@@ -65,18 +68,20 @@ public class FloatingCombatText : MonoBehaviour
         _canvas = canvas;
     }
 
+    private void UpdateScreenPosition()
+    {
+        Camera camera = Camera.main;
+        if (camera == null || _text == null) return;
+        Vector3 screenPoint = camera.WorldToScreenPoint(_worldPosition);
+        _text.enabled = screenPoint.z > 0f;
+        if (_text.enabled) _text.rectTransform.position = screenPoint;
+    }
+
     private void Update()
     {
         _elapsed += Time.deltaTime;
         _worldPosition += Vector3.up * (riseSpeed * Time.deltaTime);
-
-        Camera camera = Camera.main;
-        if (camera != null && _text != null)
-        {
-            Vector3 screenPoint = camera.WorldToScreenPoint(_worldPosition);
-            _text.enabled = screenPoint.z > 0f;
-            if (_text.enabled) _text.rectTransform.position = screenPoint;
-        }
+        UpdateScreenPosition();
 
         float t = lifetime > 0f ? _elapsed / lifetime : 1f;
         if (_text != null)
@@ -87,10 +92,5 @@ public class FloatingCombatText : MonoBehaviour
         }
 
         if (t >= 1f) Destroy(gameObject);
-    }
-
-    private void OnDestroy()
-    {
-        _active.Remove(this);
     }
 }

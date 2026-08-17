@@ -2343,6 +2343,7 @@ GameObject:
   - component: {fileID: 6339643764688989166}
   - component: {fileID: 3477313758721881546}
   - component: {fileID: 7808906544913138123}
+  - component: {fileID: -8448187933370436256}
   m_Layer: 0
   m_Name: RomeShip
   m_TagString: RomeShip
@@ -2425,6 +2426,22 @@ MonoBehaviour:
   shipData: {fileID: 0}
   separationRadius: 3.5
   separationStrength: 1.5
+--- !u!114 &-8448187933370436256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5523474604332321846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4ccd8344c43080408f0459441c6322e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipBuoyancy
+  bobAmplitude: 0.18
+  bobPeriod: 4.2
+  swayDegrees: 3.5
+  swayPeriod: 5.5
 --- !u!1 &5526967577328793849
 GameObject:
   m_ObjectHideFlags: 0

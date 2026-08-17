@@ -61,6 +61,7 @@ public class SidiBouSaidTower : MonoBehaviour
             WorkerRoster.Instance.AddFailedFighterWorkers(workers);
 
         FloatingCombatText.Spawn(transform.position, "+" + level.recruitsPerArrival + " crew", new Color(.35f, 1f, .3f));
+        SfxManager.Instance?.PlayCrewGenerated();
     }
 
     private SidiBouSaidLevel ActiveLevel() =>

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarthaginianResourceDefinition
   buildingName: Oil Extractor
   description: 
-  prefab: {fileID: 0}
+  prefab: {fileID: 100004000001, guid: d4e5f647a8b9c0d1e2f3a4b5c6d7e8f9, type: 3}
   environment: 1
   requiredZoneId: OilFields
   resource: 2

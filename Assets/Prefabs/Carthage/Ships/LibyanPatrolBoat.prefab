@@ -1505,11 +1505,10 @@ GameObject:
   - component: {fileID: 1327795353359816822}
   - component: {fileID: 4454334499003365393}
   - component: {fileID: 828481230390054139}
-  - component: {fileID: 1935893274109006743}
   - component: {fileID: 9187761176886311555}
   - component: {fileID: 8836510276599163631}
   - component: {fileID: 3377097423651176844}
-  - component: {fileID: 2481536133556921860}
+  - component: {fileID: -7309577323633949381}
   m_Layer: 0
   m_Name: LibyanPatrolBoat
   m_TagString: CartageShip
@@ -1611,21 +1610,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1935893274109006743
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2127971777563762160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a12d51adc492b9241a3c6460a09822ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianTarget
-  targetType: 0
-  maxHealth: 10
-  destroyGameObjectOnDeath: 1
 --- !u!114 &9187761176886311555
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1681,7 +1665,7 @@ MonoBehaviour:
   combatClass: 0
   separationRadius: 3.5
   separationStrength: 1.5
---- !u!114 &2481536133556921860
+--- !u!114 &-7309577323633949381
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1690,10 +1674,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2127971777563762160}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94b795365bd1b5e4284d82496646c0cc, type: 3}
+  m_Script: {fileID: 11500000, guid: e4ccd8344c43080408f0459441c6322e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarthaginianShipCrew
-  returnSurvivingCrewToRoster: 1
+  m_EditorClassIdentifier: Assembly-CSharp::ShipBuoyancy
+  bobAmplitude: 0.18
+  bobPeriod: 4.2
+  swayDegrees: 3.5
+  swayPeriod: 5.5
 --- !u!1 &2199280024989465872
 GameObject:
   m_ObjectHideFlags: 0
