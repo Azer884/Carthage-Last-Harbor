@@ -52,9 +52,9 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
         {
             Bounds bounds = renderers[0].bounds;
             foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
-            top = bounds.max.y - transform.position.y + .4f;
+            top = bounds.max.y - transform.position.y + .7f;
         }
-        _healthBar = FloatingHealthBar.Attach(transform, top);
+        _healthBar = FloatingHealthBar.Attach(transform, top, .2f);
         _healthBar.SetFraction(1f);
     }
 

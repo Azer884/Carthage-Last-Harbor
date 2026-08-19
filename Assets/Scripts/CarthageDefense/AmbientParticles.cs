@@ -32,7 +32,10 @@ public class AmbientParticles : MonoBehaviour
     // bounds, but AddComponent() runs Awake() synchronously before it gets the chance to pass them in.
     private void Setup(Vector3 center, Vector3 size)
     {
-        transform.position = center;
+        // Y and overall scale tuned by hand in the Editor to sit right for this map — keep the
+        // camera-bounds-derived X/Z centering, but pin the height and scale to what actually looked right.
+        transform.position = new Vector3(center.x, 36.9f, center.z);
+        transform.localScale = Vector3.one * 3.955452f;
         ParticleSystem system = gameObject.AddComponent<ParticleSystem>();
         ParticleSystemRenderer particleRenderer = GetComponent<ParticleSystemRenderer>();
         Shader shader = Shader.Find("Sprites/Default");

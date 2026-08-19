@@ -30,14 +30,16 @@ public class FloatingHealthBar : MonoBehaviour
         return _solidSprite;
     }
 
-    public static FloatingHealthBar Attach(Transform target, float worldHeight, float worldWidth = 1.6f)
+    // `scale` is the canvas's direct localScale (what you'd tune by hand in the Inspector on the "Floating
+    // Health Bar" object) rather than an indirect world-width — easier to dial in visually per object type.
+    public static FloatingHealthBar Attach(Transform target, float worldHeight, float scale = .2f)
     {
         GameObject canvasObject = new GameObject("Floating Health Bar", typeof(Canvas));
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
         canvasRect.sizeDelta = new Vector2(120f, 16f);
-        canvasObject.transform.localScale = Vector3.one * (worldWidth / 120f);
+        canvasObject.transform.localScale = Vector3.one * scale;
 
         GameObject background = new GameObject("Background", typeof(Image));
         background.transform.SetParent(canvasObject.transform, false);

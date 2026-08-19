@@ -6,6 +6,7 @@ using UnityEngine;
 public class MusicManager : MonoBehaviour
 {
     public static MusicManager Instance { get; private set; }
+    private const string MusicVolumeKey = "CarthageDefense.MusicVolume";
 
     [SerializeField] private AudioClip buildMusic;
     [SerializeField] private AudioClip waveMusic;
@@ -29,6 +30,8 @@ public class MusicManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        // Overrides the Inspector default with whatever the player set in the main menu settings panel.
+        volume = PlayerPrefs.GetFloat(MusicVolumeKey, volume);
         _sourceA = gameObject.AddComponent<AudioSource>();
         _sourceB = gameObject.AddComponent<AudioSource>();
         _sourceA.loop = _sourceB.loop = true;

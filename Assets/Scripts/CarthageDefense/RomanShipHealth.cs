@@ -13,7 +13,9 @@ public class RomanShipHealth : MonoBehaviour
     private void Awake()
     {
         _currentHealth = maxHealth;
-        EnsureHealthBar();
+        // Not creating the bar here on purpose: RomanShip.shipData (which carries the per-type
+        // showHealthBar flag) isn't assigned yet at this point — SpawnManager calls AssignShip() before
+        // Configure(), so Configure() is the first place that flag is reliably known.
     }
 
     public void Configure(float crewSize, int shipBounty)
@@ -24,8 +26,17 @@ public class RomanShipHealth : MonoBehaviour
         EnsureHealthBar();
     }
 
+    // Only the ship type(s) with RomeShip.showHealthBar set get one — most waves have plenty of ships on
+    // screen at once, and a bar over every single one would be pure clutter for anything but the notable
+    // "big" ship.
     private void EnsureHealthBar()
     {
+        RomanShip ship = GetComponent<RomanShip>();
+        if (ship == null || ship.shipData == null || !ship.shipData.showHealthBar)
+        {
+            if (_healthBar != null) { Destroy(_healthBar.gameObject); _healthBar = null; }
+            return;
+        }
         if (_healthBar != null) { _healthBar.SetFraction(_currentHealth / maxHealth); return; }
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         float top = 1.2f;
@@ -33,9 +44,9 @@ public class RomanShipHealth : MonoBehaviour
         {
             Bounds bounds = renderers[0].bounds;
             foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
-            top = bounds.max.y - transform.position.y + .4f;
+            top = bounds.max.y - transform.position.y + .7f;
         }
-        _healthBar = FloatingHealthBar.Attach(transform, top);
+        _healthBar = FloatingHealthBar.Attach(transform, top, .2f);
         _healthBar.SetFraction(_currentHealth / maxHealth);
     }
 

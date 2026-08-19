@@ -115,7 +115,9 @@ public class TowerSelectionManager : MonoBehaviour
         if (_selected == building) return;
         Deselect();
         _selected = building;
-        _selectedOutline = building.GetComponentInChildren<Outline>(true);
+        // Active-only: towers built from per-level model children (Outline on each) only ever have one
+        // active at a time, so this reliably resolves whichever level is currently showing.
+        _selectedOutline = building.GetComponentInChildren<Outline>();
         if (_selectedOutline != null) _selectedOutline.enabled = true;
         if (TryGetRangeVisual(building, out float range, out Color rangeColor))
         {
@@ -177,7 +179,7 @@ public class TowerSelectionManager : MonoBehaviour
 
     private void SetHover(GameObject building)
     {
-        Outline next = building != null ? building.GetComponentInChildren<Outline>(true) : null;
+        Outline next = building != null ? building.GetComponentInChildren<Outline>() : null;
         if (_hoverOutline == next) return;
         if (_hoverOutline != null && _hoverOutline != _selectedOutline) _hoverOutline.enabled = false;
         _hoverOutline = next;

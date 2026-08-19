@@ -23,4 +23,6 @@ public class RomeShip : ScriptableObject
     public float speed;
     [Tooltip("Optional. If assigned, attacks spawn this and it travels to the target (auto-gets a RomanProjectile component if it doesn't have one). Leave empty for an instant hit with just an impact spark.")]
     public GameObject projectilePrefab;
+    [Tooltip("Not every Roman ship type needs a floating health bar cluttering the screen — leave this off for common/weak ships and reserve it for the big, notable one(s).")]
+    public bool showHealthBar;
 }

@@ -33,6 +33,7 @@ public class CarthaginianTower : MonoBehaviour
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
         CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
         if (dragonTower != null) dragonTower.SetLevel(currentLevel);
+        ApplyVisual();
     }
 
     public void Initialize(CarthaginianTowerDefinition towerDefinition)
@@ -47,6 +48,21 @@ public class CarthaginianTower : MonoBehaviour
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
         CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
         if (dragonTower != null) dragonTower.SetLevel(currentLevel);
+        ApplyVisual();
+    }
+
+    // Per-level model prefabs are dragged in as the tower's own children, in order — child 0 is the
+    // Level I model, child 1 is Level II, and so on. Only the child matching currentLevel is shown; the
+    // rest of that same index range is hidden. Any extra children beyond the level count (e.g. a
+    // LighthouseSpawner's LaunchPoint) are left alone. Each child carries its own Outline component, so
+    // no cross-refresh is needed here: a child's Outline caches its own renderer the moment it first
+    // becomes active, which is exactly when SetActive(true) below fires it for the first time.
+    private void ApplyVisual()
+    {
+        if (definition == null || definition.levels == null) return;
+        int childCount = Mathf.Min(transform.childCount, definition.levels.Length);
+        for (int i = 0; i < childCount; i++)
+            transform.GetChild(i).gameObject.SetActive(i == currentLevel);
     }
 
     public bool TryUpgrade()
@@ -65,6 +81,7 @@ public class CarthaginianTower : MonoBehaviour
         if (sidiBouSaid != null) sidiBouSaid.SetLevel(currentLevel);
         CarthaginianDragonTower dragonTower = GetComponent<CarthaginianDragonTower>();
         if (dragonTower != null) dragonTower.SetLevel(currentLevel);
+        ApplyVisual();
         SfxManager.Instance?.PlayTowerUpgraded();
         PlayUpgradeFx(currentLevel);
         PlayUpgradeBounce(currentLevel);

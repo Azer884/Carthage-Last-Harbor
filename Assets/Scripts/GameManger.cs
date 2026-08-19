@@ -38,6 +38,7 @@ public class GameManger : MonoBehaviour
     public bool IsPreWaveDelayActive => _preWaveDelayActive;
     public float PreWaveDelayRemaining => _preWaveDelayActive ? Mathf.Max(0f, _preWaveDelayRemaining) : 0f;
     public int CurrentWaveIndex => _currentWaveIndex;
+    public float AutoStartDelay => autoStartDelay;
     // Ships still to be spawned in the wave currently in progress (0 once the last one has launched).
     public int ShipsQueuedThisWave => _shipsQueuedThisWave;
     public event Action<int> WaveStarted;

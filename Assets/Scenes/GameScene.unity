@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7953d6cfeaaa2d547983b92c1a62cfac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
-  startingMoney: 2500000
+  startingMoney: 250000
 --- !u!4 &11434016
 Transform:
   m_ObjectHideFlags: 0

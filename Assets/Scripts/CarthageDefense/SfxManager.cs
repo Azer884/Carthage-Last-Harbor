@@ -5,6 +5,7 @@ using UnityEngine;
 public class SfxManager : MonoBehaviour
 {
     public static SfxManager Instance { get; private set; }
+    private const string SfxVolumeKey = "CarthageDefense.SfxVolume";
 
     [Header("Building")]
     [SerializeField] private AudioClip towerPlaced;
@@ -50,6 +51,8 @@ public class SfxManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        // Overrides the Inspector default with whatever the player set in the main menu settings panel.
+        volume = PlayerPrefs.GetFloat(SfxVolumeKey, volume);
         _source = gameObject.AddComponent<AudioSource>();
         _source.playOnAwake = false;
 

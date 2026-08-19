@@ -61,6 +61,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private float _activeTimeScale = 1f;
     private bool _isPaused;
     private GameObject _pausePanel;
+    private readonly List<(Button button, int cost)> _buildButtons = new List<(Button, int)>();
 
     private void Awake()
     {
@@ -351,10 +352,20 @@ public class CarthaginianBuildMenu : MonoBehaviour
         HandlePauseInput();
         RefreshStatusBar();
         RefreshStartWaveButton();
+        RefreshBuildButtonAffordability();
         RefreshHud();
         RefreshIncoming();
         RefreshCountdown();
         HandleClickFeedback();
+    }
+
+    // Can't afford it → the button is disabled outright, so the player can't even enter placement/preview
+    // mode for something they have no way to actually pay for.
+    private void RefreshBuildButtonAffordability()
+    {
+        int money = EconomyManager.Instance != null ? EconomyManager.Instance.Money : 0;
+        foreach ((Button button, int cost) in _buildButtons)
+            if (button != null) button.interactable = money >= cost;
     }
 
     private void RefreshIncoming()
@@ -463,7 +474,8 @@ public class CarthaginianBuildMenu : MonoBehaviour
         if (_timerText == null) return;
         if (GameManger.Instance != null && GameManger.Instance.IsWaveRunning)
         {
-            _timerText.text = "Wave in progress: " + FormatTime(Time.time - _waveStartTime);
+            // No timer while a wave is actually running — "Ships Incoming" already covers wave progress.
+            _timerText.text = string.Empty;
         }
         else if (GameManger.Instance != null && (GameManger.Instance.IsAutoStartPending || GameManger.Instance.IsPreWaveDelayActive))
         {
@@ -472,9 +484,11 @@ public class CarthaginianBuildMenu : MonoBehaviour
         }
         else
         {
-            // Never blank — before the first wave (or with auto-start off and nothing queued yet) this
-            // just ticks as a plain session clock instead of leaving the field empty.
-            _timerText.text = "Time: " + FormatTime(Time.time);
+            // Counts down once from AutoStartDelay (even with auto-start off) instead of an endlessly
+            // rising session clock, then settles on a static ready prompt rather than looping pointlessly.
+            float cycle = GameManger.Instance != null ? Mathf.Max(1f, GameManger.Instance.AutoStartDelay) : 20f;
+            float sinceLoad = Time.timeSinceLevelLoad;
+            _timerText.text = sinceLoad < cycle ? "Ready in: " + Mathf.CeilToInt(cycle - sinceLoad) + "s" : "Ready — click START WAVE";
         }
     }
 
@@ -548,6 +562,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
             else { dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectTower(definition); }
         });
         AddTooltip(button.gameObject, BuildTowerTooltip(definition));
+        _buildButtons.Add((button, definition.buildCost));
     }
 
     private void CreateResourceButton(RectTransform parent, CarthaginianResourceDefinition definition, int index, int count)
@@ -555,6 +570,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         Button button = CreateButton(parent, definition.buildingName, definition.icon, index, count);
         button.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); dragonPlacementController?.CancelPlacement(); if (placementController != null) placementController.SelectResourceTower(definition); });
         AddTooltip(button.gameObject, BuildResourceTooltip(definition));
+        _buildButtons.Add((button, definition.buildCost));
     }
 
     private Button CreateButton(RectTransform parent, string label, Sprite icon, int index, int count)
