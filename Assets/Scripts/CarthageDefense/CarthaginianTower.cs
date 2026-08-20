@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Runtime tower progression. Each upgrade unlocks the ships configured for that level.</summary>
@@ -10,6 +11,9 @@ public class CarthaginianTower : MonoBehaviour
     private Vector3 _baseScale;
     [Tooltip("Uncheck for fixed civic buildings (e.g. Sidi Bou Said) that the player should never be able to sell off.")]
     [SerializeField] private bool sellable = true;
+    // Ships this tower has launched and are still afloat — capped per level (TowerLevel.maxActiveShips) so a
+    // maxed-out dock can't spawn an unlimited fleet; scuttling a ship frees a slot for another.
+    private readonly List<CarthaginianShipCrew> _activeShips = new List<CarthaginianShipCrew>();
     public CarthaginianTowerDefinition Definition => definition;
     public bool Sellable => sellable;
     public void SetSellable(bool value) { sellable = value; }
@@ -22,6 +26,16 @@ public class CarthaginianTower : MonoBehaviour
     public CrewRank NextUpgradeMinimumRank => CanUpgrade ? definition.levels[currentLevel + 1].minimumUpgradeCrewRank : CrewRank.Recruit;
     public bool CanAffordUpgrade => CanUpgrade && EconomyManager.Instance != null && EconomyManager.Instance.Money >= NextUpgradeCost
         && (NextUpgradeCrewRequired == 0 || CrewRoster.Instance != null && CanRosterFillUpgradeCrew());
+    public int ActiveShipCount => _activeShips.Count;
+    public int MaxActiveShips => ActiveLevel != null ? ActiveLevel.maxActiveShips : 0;
+    public bool HasShipCapacity => ActiveShipCount < MaxActiveShips;
+
+    public void RegisterShip(CarthaginianShipCrew ship)
+    {
+        if (ship != null && !_activeShips.Contains(ship)) _activeShips.Add(ship);
+    }
+
+    public void UnregisterShip(CarthaginianShipCrew ship) => _activeShips.Remove(ship);
 
     private void Awake()
     {
@@ -57,9 +71,13 @@ public class CarthaginianTower : MonoBehaviour
     // LighthouseSpawner's LaunchPoint) are left alone. Each child carries its own Outline component, so
     // no cross-refresh is needed here: a child's Outline caches its own renderer the moment it first
     // becomes active, which is exactly when SetActive(true) below fires it for the first time.
+    // Some towers (e.g. the Dragon) instead have a single shared model for every level — fewer children
+    // than levels — since only stats change per level, not the visual. Skip switching entirely in that
+    // case; otherwise upgrading past level 0 would hide child 0 with nothing to take its place.
     private void ApplyVisual()
     {
         if (definition == null || definition.levels == null) return;
+        if (transform.childCount < definition.levels.Length) return;
         int childCount = Mathf.Min(transform.childCount, definition.levels.Length);
         for (int i = 0; i < childCount; i++)
             transform.GetChild(i).gameObject.SetActive(i == currentLevel);

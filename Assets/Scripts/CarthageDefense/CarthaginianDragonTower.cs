@@ -16,6 +16,7 @@ public class CarthaginianDragonTower : MonoBehaviour
     private int _activeLevel;
     private RomanShipHealth _target;
     private float _nextAttackTime;
+    private Animator _animator;
     public DragonTowerLevel ActiveStats => levels != null && levels.Length > 0 ? levels[Mathf.Clamp(_activeLevel, 0, levels.Length - 1)] : null;
     public Vector3 PlacementOffset => placementOffset;
 
@@ -25,8 +26,17 @@ public class CarthaginianDragonTower : MonoBehaviour
         _activeLevel = Mathf.Clamp(level, 0, levels.Length - 1);
     }
 
+    private void Awake()
+    {
+        // The model (and its single-clip Animator) lives on a child, not this root — the imported clip's
+        // own Loop Time is off, so without this it plays once and freezes on the last pose instead of
+        // continuously animating.
+        _animator = GetComponentInChildren<Animator>();
+    }
+
     private void Update()
     {
+        LoopAnimation();
         DragonTowerLevel stats = ActiveStats;
         if (stats == null) return;
         if (_target == null || _target.IsDestroyed || Vector3.Distance(transform.position, _target.transform.position) > stats.sightRange)
@@ -36,6 +46,15 @@ public class CarthaginianDragonTower : MonoBehaviour
         if (Vector3.Distance(transform.position, _target.transform.position) > stats.attackRange || Time.time < _nextAttackTime) return;
         _nextAttackTime = Time.time + stats.attackCooldown;
         Fire(stats, _target);
+    }
+
+    // Manually restarts the current Animator state once it reaches the end of its cycle, since the
+    // imported clip isn't marked to loop on its own.
+    private void LoopAnimation()
+    {
+        if (_animator == null) return;
+        AnimatorStateInfo state = _animator.GetCurrentAnimatorStateInfo(0);
+        if (state.normalizedTime >= 1f) _animator.Play(state.fullPathHash, 0, 0f);
     }
 
     private void Fire(DragonTowerLevel stats, RomanShipHealth target)

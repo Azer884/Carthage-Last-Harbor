@@ -27,9 +27,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
     [SerializeField] private CarthaginianResourceDefinition[] resourceTowers;
     [Header("Layout")]
     [SerializeField, Range(0.15f, 0.5f)] private float menuHeightFraction = 0.25f;
-    [SerializeField] private Color attackColor = new Color(0.55f, 0.16f, 0.11f, 0.95f);
-    [SerializeField] private Color defenseColor = new Color(0.12f, 0.27f, 0.48f, 0.95f);
-    [SerializeField] private Color resourceColor = new Color(0.18f, 0.40f, 0.24f, 0.95f);
+    [SerializeField] private Color attackColor = CarthageTheme.CategoryAttack;
+    [SerializeField] private Color defenseColor = CarthageTheme.CategoryDefense;
+    [SerializeField] private Color resourceColor = CarthageTheme.CategoryResource;
 
     private TextMeshProUGUI _moneyText;
     private TextMeshProUGUI _crewText;
@@ -71,7 +71,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
         TowerSelectionManager.Ensure();
         GameOverController.Ensure();
         SfxManager.Ensure();
-        MusicManager.Ensure();
+        // Already playing build music if we arrived from the main menu; otherwise (e.g. Play started
+        // directly on GameScene in the Editor) this is what actually kicks music off.
+        MusicManager.Ensure().PlayBuildMusic();
         MercenaryMarket.Ensure();
         MercenaryMarketUI.Ensure();
         if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
@@ -172,7 +174,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
-        RectTransform menu = CreatePanel("Three Build Sections", root.transform, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        RectTransform menu = CreatePanel("Three Build Sections", root.transform, CarthageTheme.Panel);
         _menu = menu;
         menu.anchorMin = new Vector2(0f, .15f); menu.anchorMax = new Vector2(.27f, .85f);
         menu.offsetMin = new Vector2(18f, 0f); menu.offsetMax = Vector2.zero;
@@ -232,26 +234,32 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void CreatePausePanel(Transform parent)
     {
-        RectTransform panel = CreatePanel("Pause Panel", parent, new Color(0f, 0f, 0f, .85f));
-        panel.anchorMin = Vector2.zero; panel.anchorMax = Vector2.one; panel.offsetMin = panel.offsetMax = Vector2.zero;
-        _pausePanel = panel.gameObject;
+        RectTransform overlay = CarthageTheme.CreateFlatPanel("Pause Panel", parent, CarthageTheme.Overlay);
+        overlay.anchorMin = Vector2.zero; overlay.anchorMax = Vector2.one; overlay.offsetMin = overlay.offsetMax = Vector2.zero;
+        _pausePanel = overlay.gameObject;
 
-        CreateText("PAUSED", panel, 56, TextAnchor.MiddleCenter, new Vector2(.25f, .58f), new Vector2(.75f, .7f));
+        RectTransform dialog = CarthageTheme.CreateFramedPanel("Pause Dialog", overlay, CarthageTheme.Panel, 4f);
+        dialog.anchorMin = new Vector2(.36f, .3f); dialog.anchorMax = new Vector2(.64f, .62f);
+        dialog.offsetMin = dialog.offsetMax = Vector2.zero;
 
-        Button resume = CreateButton(panel, "Resume Button", null, 0, 1);
+        TextMeshProUGUI paused = CreateText("PAUSED", dialog, 48, TextAnchor.MiddleCenter, new Vector2(.1f, .68f), new Vector2(.9f, .92f));
+        paused.color = CarthageTheme.Gold;
+        paused.fontStyle = FontStyles.Bold;
+
+        Button resume = CreateButton(dialog, "Resume Button", null, 0, 1);
         RectTransform resumeRect = resume.GetComponent<RectTransform>();
-        resumeRect.anchorMin = new Vector2(.42f, .45f); resumeRect.anchorMax = new Vector2(.58f, .53f);
+        resumeRect.anchorMin = new Vector2(.15f, .38f); resumeRect.anchorMax = new Vector2(.85f, .58f);
         resumeRect.offsetMin = resumeRect.offsetMax = Vector2.zero;
         CenterButtonLabel(resume);
         resume.GetComponentInChildren<TextMeshProUGUI>().text = "RESUME";
         resume.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); TogglePause(); });
 
-        Button restart = CreateButton(panel, "Restart Button", null, 0, 1);
+        Button restart = CreateButton(dialog, "Restart Button", null, 0, 1);
         RectTransform restartRect = restart.GetComponent<RectTransform>();
-        restartRect.anchorMin = new Vector2(.42f, .33f); restartRect.anchorMax = new Vector2(.58f, .41f);
+        restartRect.anchorMin = new Vector2(.15f, .12f); restartRect.anchorMax = new Vector2(.85f, .32f);
         restartRect.offsetMin = restartRect.offsetMax = Vector2.zero;
         CenterButtonLabel(restart);
-        restart.GetComponent<Image>().color = new Color(.5f, .14f, .1f, 1f);
+        restart.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
         restart.GetComponentInChildren<TextMeshProUGUI>().text = "RESTART";
         restart.onClick.AddListener(() =>
         {
@@ -280,7 +288,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
     // Bottom-right of the HUD row was empty (health bar only spans .38-.62) — a natural home for wave info.
     private void CreateIncomingPanel(Transform parent)
     {
-        RectTransform bar = CreatePanel("Ships Incoming", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        RectTransform bar = CreatePanel("Ships Incoming", parent, CarthageTheme.Panel);
         bar.anchorMin = new Vector2(.64f, .015f);
         bar.anchorMax = new Vector2(.98f, .075f);
         bar.offsetMin = bar.offsetMax = Vector2.zero;
@@ -297,7 +305,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         _countdownText.fontSize = 160;
         _countdownText.fontStyle = FontStyles.Bold;
         _countdownText.alignment = TextAlignmentOptions.Center;
-        _countdownText.color = new Color(1f, .85f, .3f, 1f);
+        _countdownText.color = CarthageTheme.Gold;
         _countdownText.enableWordWrapping = false;
         _countdownText.overflowMode = TextOverflowModes.Overflow;
         _countdownRect = _countdownText.rectTransform;
@@ -309,19 +317,19 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void CreateTimerPanel(Transform parent)
     {
-        RectTransform bar = CreatePanel("Wave Timer", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        RectTransform bar = CreatePanel("Wave Timer", parent, CarthageTheme.Panel);
         bar.anchorMin = new Vector2(0f, .015f);
         bar.anchorMax = new Vector2(.20f, .075f);
         bar.offsetMin = new Vector2(18f, 0f);
         bar.offsetMax = Vector2.zero;
 
         _timerText = CreateText(string.Empty, bar, 14, TextAnchor.MiddleCenter, new Vector2(.04f, .1f), new Vector2(.96f, .9f));
-        _timerText.color = new Color(1f, .85f, .35f, 1f);
+        _timerText.color = CarthageTheme.Gold;
     }
 
     private void CreateHealthBarPanel(Transform parent)
     {
-        RectTransform bar = CreatePanel("Heart Health Bar", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        RectTransform bar = CreatePanel("Heart Health Bar", parent, CarthageTheme.Panel);
         bar.anchorMin = new Vector2(.38f, .015f);
         bar.anchorMax = new Vector2(.62f, .075f);
         bar.offsetMin = bar.offsetMax = Vector2.zero;
@@ -384,13 +392,14 @@ public class CarthaginianBuildMenu : MonoBehaviour
     private void RefreshCountdown()
     {
         if (_countdownText == null) return;
-        // Covers both paths that lead into a wave: the (usually much longer) auto-start idle countdown,
-        // and the short pre-wave delay that also runs after a manual Start-Wave click — previously only
-        // the auto-start path was hooked up, so clicking Start skipped the big 3-2-1 entirely.
-        bool autoPending = GameManger.Instance != null && GameManger.Instance.IsAutoStartPending;
-        bool preWavePending = GameManger.Instance != null && GameManger.Instance.IsPreWaveDelayActive;
-        bool pending = autoPending || preWavePending;
-        float remaining = autoPending ? GameManger.Instance.AutoStartTimeRemaining : preWavePending ? GameManger.Instance.PreWaveDelayRemaining : 0f;
+        // Only the pre-wave delay drives the big number — it's the countdown that actually precedes ships
+        // appearing, and every wave has one (>=4s), so it fires reliably whether the wave was auto-started
+        // or clicked manually. The (much longer) auto-start idle wait already has its own small HUD timer;
+        // also feeding it into this same countdown made an auto-started wave flash the big number twice in
+        // a row — once as the idle wait ended, again a moment later as the pre-wave delay began — and cut
+        // the second one's "4" down to a sliver since it interrupted the first one's fade-out.
+        bool pending = GameManger.Instance != null && GameManger.Instance.IsPreWaveDelayActive;
+        float remaining = pending ? GameManger.Instance.PreWaveDelayRemaining : 0f;
         int shown = pending && remaining <= 3.5f ? Mathf.CeilToInt(remaining) : -1;
         if (shown == _lastCountdownShown) return;
         _lastCountdownShown = shown;
@@ -536,7 +545,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         RectTransform section = CreatePanel(heading, parent, color);
         section.anchorMin = new Vector2(0f, index / 3f); section.anchorMax = new Vector2(1f, (index + 1) / 3f);
         section.offsetMin = new Vector2(6f, 6f); section.offsetMax = new Vector2(-6f, -6f);
-        CreateText(heading, section, 17, TextAnchor.UpperCenter, new Vector2(0f, .71f), new Vector2(1f, 1f));
+        StyleSectionHeading(CreateText(heading, section, 17, TextAnchor.UpperCenter, new Vector2(0f, .71f), new Vector2(1f, 1f)));
         if (definitions == null || definitions.Length == 0) { CreateText("No towers assigned", section, 14, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(1f, .71f)); return; }
         for (int i = 0; i < definitions.Length; i++) if (definitions[i] != null) CreateTowerButton(section, definitions[i], i, definitions.Length);
     }
@@ -546,9 +555,15 @@ public class CarthaginianBuildMenu : MonoBehaviour
         RectTransform section = CreatePanel(heading, parent, color);
         section.anchorMin = new Vector2(0f, index / 3f); section.anchorMax = new Vector2(1f, (index + 1) / 3f);
         section.offsetMin = new Vector2(6f, 6f); section.offsetMax = new Vector2(-6f, -6f);
-        CreateText(heading, section, 17, TextAnchor.UpperCenter, new Vector2(0f, .71f), new Vector2(1f, 1f));
+        StyleSectionHeading(CreateText(heading, section, 17, TextAnchor.UpperCenter, new Vector2(0f, .71f), new Vector2(1f, 1f)));
         if (definitions == null || definitions.Length == 0) { CreateText("No towers assigned", section, 14, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(1f, .71f)); return; }
         for (int i = 0; i < definitions.Length; i++) if (definitions[i] != null) CreateResourceButton(section, definitions[i], i, definitions.Length);
+    }
+
+    private static void StyleSectionHeading(TextMeshProUGUI heading)
+    {
+        heading.color = CarthageTheme.Gold;
+        heading.fontStyle = FontStyles.Bold;
     }
 
     private void CreateTowerButton(RectTransform parent, CarthaginianTowerDefinition definition, int index, int count)
@@ -577,9 +592,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
     {
         GameObject buttonObject = new GameObject(label + " Button", typeof(Image), typeof(Button));
         buttonObject.transform.SetParent(parent, false);
-        Image image = buttonObject.GetComponent<Image>(); image.color = new Color(0.08f, 0.07f, 0.055f, .97f);
+        Image image = buttonObject.GetComponent<Image>(); image.color = CarthageTheme.PanelDim;
         Button button = buttonObject.GetComponent<Button>();
-        ColorBlock colors = button.colors; colors.highlightedColor = new Color(1f, .77f, .25f, 1f); colors.pressedColor = new Color(.78f, .46f, .12f, 1f); button.colors = colors;
+        ColorBlock colors = button.colors; colors.highlightedColor = CarthageTheme.Gold; colors.pressedColor = CarthageTheme.Border; button.colors = colors;
         RectTransform rect = buttonObject.GetComponent<RectTransform>();
         float width = 1f / count; rect.anchorMin = new Vector2(index * width, .06f); rect.anchorMax = new Vector2((index + 1) * width, .67f);
         rect.offsetMin = new Vector2(7f, 0f); rect.offsetMax = new Vector2(-7f, 0f);
@@ -595,7 +610,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void CreateTooltip(Transform parent)
     {
-        RectTransform panel = CreatePanel("Tower Tooltip", parent, new Color(.02f, .02f, .03f, .96f));
+        RectTransform panel = CreatePanel("Tower Tooltip", parent, CarthageTheme.PanelDim);
         panel.anchorMin = new Vector2(.35f, .28f); panel.anchorMax = new Vector2(.65f, .52f); panel.offsetMin = panel.offsetMax = Vector2.zero;
         _tooltipPanel = panel.gameObject;
         _tooltip = CreateText(string.Empty, panel, 17, TextAnchor.UpperLeft, new Vector2(.06f, .08f), new Vector2(.94f, .92f));
@@ -614,7 +629,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
     private void CreateStatusBar(Transform parent)
     {
-        RectTransform bar = CreatePanel("Status Bar", parent, new Color(0.025f, 0.035f, 0.06f, 0.93f));
+        RectTransform bar = CreatePanel("Status Bar", parent, CarthageTheme.Panel);
         bar.anchorMin = new Vector2(.30f, .91f);
         bar.anchorMax = new Vector2(.98f, .985f);
         bar.offsetMin = Vector2.zero;
@@ -631,7 +646,19 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
         _moneyText = CreateText("Coins: -- TND", bar, 16, TextAnchor.MiddleLeft, new Vector2(.24f, .18f), new Vector2(.52f, .82f));
         _crewText = CreateText("Crew: --", bar, 16, TextAnchor.MiddleLeft, new Vector2(.54f, .18f), new Vector2(.78f, .82f));
+        AddTooltip(_crewText.gameObject, BuildCrewBreakdownTooltip);
         _workerText = CreateText("Workers: --", bar, 16, TextAnchor.MiddleLeft, new Vector2(.80f, .18f), new Vector2(.98f, .82f));
+    }
+
+    // Recomputed fresh every time the player hovers, rather than baked once, since available crew per
+    // rank changes constantly as ships are crewed, mercs are bought, and El Jem promotes trainees.
+    private string BuildCrewBreakdownTooltip()
+    {
+        StringBuilder text = new StringBuilder("CREW AVAILABLE");
+        if (CrewRoster.Instance == null) { text.Append("\n\nNo crew roster yet."); return text.ToString(); }
+        foreach (CrewRank rank in Enum.GetValues(typeof(CrewRank)))
+            text.Append("\n").Append(rank).Append(": ").Append(CrewRoster.Instance.GetAvailable(rank));
+        return text.ToString();
     }
 
     private void EnsurePathArrowVisualizer()
@@ -709,34 +736,36 @@ public class CarthaginianBuildMenu : MonoBehaviour
         HideTooltip();
     }
 
-    private RectTransform CreatePanel(string objectName, Transform parent, Color color)
-    {
-        GameObject panel = new GameObject(objectName, typeof(Image)); panel.transform.SetParent(parent, false);
-        Image image = panel.GetComponent<Image>(); image.color = color;
-        return panel.GetComponent<RectTransform>();
-    }
+    // Gold-bordered by default (see CarthageTheme.CreateFramedPanel) — every HUD panel, section, and
+    // dialog built through this helper picks up the frame automatically.
+    private RectTransform CreatePanel(string objectName, Transform parent, Color color) => CarthageTheme.CreateFramedPanel(objectName, parent, color);
 
     private TextMeshProUGUI CreateText(string text, RectTransform parent, int fontSize, TextAnchor alignment, Vector2 min, Vector2 max)
     {
         GameObject textObject = new GameObject("Text", typeof(TextMeshProUGUI)); textObject.transform.SetParent(parent, false);
-        TextMeshProUGUI result = textObject.GetComponent<TextMeshProUGUI>(); result.text = text; result.fontSize = fontSize; result.alignment = TmpTextUtility.ToTmpAlignment(alignment); result.color = Color.white; result.enableWordWrapping = true; result.overflowMode = TextOverflowModes.Overflow;
+        TextMeshProUGUI result = textObject.GetComponent<TextMeshProUGUI>(); result.text = text; result.fontSize = fontSize; result.alignment = TmpTextUtility.ToTmpAlignment(alignment); result.color = CarthageTheme.Cream; result.enableWordWrapping = true; result.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = result.rectTransform; rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         return result;
     }
 
     private string BuildTowerTooltip(CarthaginianTowerDefinition definition)
     {
+        bool placesOnStationarySlot = definition.prefab != null && definition.prefab.GetComponent<CarthaginianDragonTower>() != null;
         StringBuilder text = new StringBuilder();
         text.AppendLine(definition.towerName).AppendLine();
         text.AppendLine(string.IsNullOrWhiteSpace(definition.description) ? "No description has been entered." : definition.description);
         text.AppendLine().Append("Build cost: ").Append(definition.buildCost).Append(" coin");
-        text.Append("\nPlacement: ").Append(string.IsNullOrEmpty(definition.requiredZoneId) ? "Any valid sea" : definition.requiredZoneId);
+        text.Append("\nPlacement: ").Append(placesOnStationarySlot ? "Carthage Port only (designated slot)"
+            : string.IsNullOrEmpty(definition.requiredZoneId) ? "Any valid sea" : definition.requiredZoneId);
         if (definition.levels != null && definition.levels.Length > 0) text.Append("\nLevels: ").Append(definition.levels.Length);
+        // Shown so the player knows, before ever placing the tower, what crew they'll need on hand to
+        // actually crew its first ship — otherwise a freshly built tower can sit useless with no obvious reason why.
         if (definition.levels != null && definition.levels.Length > 0 && definition.levels[0].unlockedShips != null)
             foreach (CarthaginianShipOption ship in definition.levels[0].unlockedShips)
             {
                 if (ship == null) continue;
                 text.Append("\nShip: ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin");
+                text.Append("\n  Crew needed: ").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+");
                 CarthaginianShipCombat combat = ship.shipPrefab != null ? ship.shipPrefab.GetComponent<CarthaginianShipCombat>() : null;
                 if (combat != null) text.Append("\n  ").Append(ShipCounterTable.Describe(combat.CombatClass));
             }
@@ -752,10 +781,12 @@ public class CarthaginianBuildMenu : MonoBehaviour
             + "\nIncome: " + definition.unitsPerCycle + " " + definition.resource + " / " + definition.productionCycleSeconds + " sec";
     }
 
-    private void AddTooltip(GameObject button, string text)
+    private void AddTooltip(GameObject target, string text) => AddTooltip(target, () => text);
+
+    private void AddTooltip(GameObject target, Func<string> textProvider)
     {
-        BuildMenuTooltipHover hover = button.AddComponent<BuildMenuTooltipHover>();
-        hover.Initialize(this, text);
+        BuildMenuTooltipHover hover = target.AddComponent<BuildMenuTooltipHover>();
+        hover.Initialize(this, textProvider);
     }
 
     public void ShowTooltip(string text) { if (_tooltipPanel != null) { _tooltip.text = text; _tooltipPanel.SetActive(true); } }
@@ -785,9 +816,11 @@ public class CarthaginianBuildMenu : MonoBehaviour
 public class BuildMenuTooltipHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private CarthaginianBuildMenu _menu;
-    private string _text;
-    public void Initialize(CarthaginianBuildMenu menu, string text) { _menu = menu; _text = text; }
-    public void OnPointerEnter(PointerEventData eventData) { if (_menu != null) _menu.ShowTooltip(_text); }
+    private Func<string> _textProvider;
+    public void Initialize(CarthaginianBuildMenu menu, Func<string> textProvider) { _menu = menu; _textProvider = textProvider; }
+    // Called fresh on every hover rather than baking the string in once, so tooltips whose underlying
+    // data changes at runtime (e.g. crew counts) never show stale numbers.
+    public void OnPointerEnter(PointerEventData eventData) { if (_menu != null) _menu.ShowTooltip(_textProvider != null ? _textProvider() : string.Empty); }
     public void OnPointerExit(PointerEventData eventData) { if (_menu != null) _menu.HideTooltip(); }
 }
 

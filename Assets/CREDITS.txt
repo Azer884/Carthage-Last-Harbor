@@ -1,0 +1,26 @@
+CARTHAGE: LAST HARBOR
+
+DEVELOPMENT
+Weldhama
+
+ENGINE
+Unity
+
+3D MODELS
+"Fire Dragon" (https://skfb.ly/6UuWI) by chengzijieczj is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Herculaneum Boat - Roman Boat" (https://skfb.ly/oIwsK) by Opus Poly is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Low-poly Mine" (https://skfb.ly/oy8Yx) by Sponk is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Extractor" (https://skfb.ly/oy9xM) by fangzhangmnm is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Oil Pumpjack - Animated" (https://skfb.ly/pFSzX) by Felnev is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+MUSIC
+(add tracks below as you source them)
+"Track Name" - Composer / Source - License
+
+SOUND EFFECTS
+(add sound effects below as you source them)
+"Effect Name" - Source - License
+
+SPECIAL THANKS
+Lil Weiß
+The free and open game-asset community

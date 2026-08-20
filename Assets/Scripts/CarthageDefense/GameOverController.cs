@@ -50,7 +50,7 @@ public class GameOverController : MonoBehaviour
         GameObject panel = new GameObject("Panel", typeof(Image), typeof(CanvasGroup));
         panel.transform.SetParent(root.transform, false);
         Image background = panel.GetComponent<Image>();
-        background.color = new Color(0f, 0f, 0f, .85f);
+        background.color = CarthageTheme.Overlay;
         RectTransform panelRect = panel.GetComponent<RectTransform>();
         panelRect.anchorMin = Vector2.zero;
         panelRect.anchorMax = Vector2.one;
@@ -58,38 +58,43 @@ public class GameOverController : MonoBehaviour
         _panel = panel;
         _panelGroup = panel.GetComponent<CanvasGroup>();
 
+        RectTransform dialog = CarthageTheme.CreateFramedPanel("Game Over Dialog", panel.transform, CarthageTheme.Panel, 4f);
+        dialog.anchorMin = new Vector2(.32f, .3f);
+        dialog.anchorMax = new Vector2(.68f, .68f);
+        dialog.offsetMin = dialog.offsetMax = Vector2.zero;
+
         GameObject titleObject = new GameObject("Title", typeof(TextMeshProUGUI));
-        titleObject.transform.SetParent(panel.transform, false);
+        titleObject.transform.SetParent(dialog, false);
         TextMeshProUGUI title = titleObject.GetComponent<TextMeshProUGUI>();
         title.text = "GAME OVER";
         title.fontSize = 64;
         title.fontStyle = FontStyles.Bold;
         title.alignment = TextAlignmentOptions.Center;
-        title.color = new Color(.9f, .2f, .15f);
+        title.color = CarthageTheme.Gold;
         RectTransform titleRect = title.rectTransform;
-        titleRect.anchorMin = new Vector2(.2f, .55f);
-        titleRect.anchorMax = new Vector2(.8f, .72f);
+        titleRect.anchorMin = new Vector2(.05f, .62f);
+        titleRect.anchorMax = new Vector2(.95f, .88f);
         titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
         _titleRect = titleRect;
 
         GameObject statsObject = new GameObject("Stats", typeof(TextMeshProUGUI));
-        statsObject.transform.SetParent(panel.transform, false);
+        statsObject.transform.SetParent(dialog, false);
         _statsText = statsObject.GetComponent<TextMeshProUGUI>();
         _statsText.fontSize = 28;
         _statsText.alignment = TextAlignmentOptions.Center;
-        _statsText.color = new Color(1f, .85f, .35f);
+        _statsText.color = CarthageTheme.Cream;
         RectTransform statsRect = _statsText.rectTransform;
-        statsRect.anchorMin = new Vector2(.2f, .5f);
-        statsRect.anchorMax = new Vector2(.8f, .55f);
+        statsRect.anchorMin = new Vector2(.05f, .44f);
+        statsRect.anchorMax = new Vector2(.95f, .58f);
         statsRect.offsetMin = statsRect.offsetMax = Vector2.zero;
         _statsRect = statsRect;
 
         GameObject buttonObject = new GameObject("Try Again Button", typeof(Image), typeof(Button));
-        buttonObject.transform.SetParent(panel.transform, false);
-        buttonObject.GetComponent<Image>().color = new Color(.5f, .14f, .1f, 1f);
+        buttonObject.transform.SetParent(dialog, false);
+        buttonObject.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
         RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(.4f, .4f);
-        buttonRect.anchorMax = new Vector2(.6f, .48f);
+        buttonRect.anchorMin = new Vector2(.2f, .14f);
+        buttonRect.anchorMax = new Vector2(.8f, .3f);
         buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
         _buttonRect = buttonRect;
 
@@ -99,7 +104,7 @@ public class GameOverController : MonoBehaviour
         label.text = "TRY AGAIN";
         label.fontSize = 24;
         label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
+        label.color = CarthageTheme.Cream;
         RectTransform labelRect = label.rectTransform;
         labelRect.anchorMin = Vector2.zero;
         labelRect.anchorMax = Vector2.one;

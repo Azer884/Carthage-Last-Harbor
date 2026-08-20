@@ -8,23 +8,26 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>Builds (or rebuilds) the Main Menu scene's UI as plain scene GameObjects: title, description,
-/// Play/Settings/Quit buttons, and a settings panel with music/SFX sliders. Everything it creates is
-/// ordinary, hand-editable scene content — restyle colors, text, or layout afterward in the Inspector.
-/// Safe to re-run any time: it deletes its own previous output before rebuilding.</summary>
+/// Play/Settings/Credits/Quit buttons, a settings panel with music/SFX sliders, and a scrollable credits
+/// panel populated from CREDITS.txt. Everything it creates is ordinary, hand-editable scene content —
+/// restyle colors, text, or layout afterward in the Inspector. Safe to re-run any time: it deletes its own
+/// previous output before rebuilding.</summary>
 public static class MainMenuSceneBuilder
 {
     private const string ScenePath = "Assets/Scenes/MainMenu.unity";
     private const string StoneTexturePath = "Assets/Textures/Port/Clay001_1K-JPG_Color.jpg";
+    private const string CreditsFilePath = "Assets/CREDITS.txt";
 
-    private static readonly Color BgColor = new Color32(0x18, 0x11, 0x0C, 0xFF);
+    // Sourced from CarthageTheme so the main menu and every in-game panel share one palette.
+    private static readonly Color BgColor = CarthageTheme.Background;
     private static readonly Color StoneTintColor = new Color(1f, 1f, 1f, 0.16f);
-    private static readonly Color PanelColor = new Color32(0x33, 0x16, 0x11, 0xE8);
-    private static readonly Color BorderColor = new Color32(0xC9, 0x9A, 0x4A, 0xFF);
-    private static readonly Color GoldColor = new Color32(0xEC, 0xC8, 0x74, 0xFF);
-    private static readonly Color CreamColor = new Color32(0xEE, 0xE3, 0xCF, 0xFF);
-    private static readonly Color ButtonColor = new Color32(0x6E, 0x24, 0x19, 0xFF);
+    private static readonly Color PanelColor = CarthageTheme.Panel;
+    private static readonly Color BorderColor = CarthageTheme.Border;
+    private static readonly Color GoldColor = CarthageTheme.Gold;
+    private static readonly Color CreamColor = CarthageTheme.Cream;
+    private static readonly Color ButtonColor = CarthageTheme.Button;
 
-    [MenuItem("Tools/Carthage/Build Main Menu Scene")]
+    [MenuItem("Carthage/Build Main Menu Scene")]
     public static void Build()
     {
         Scene scene = EditorSceneManager.GetSceneByPath(ScenePath);
@@ -57,16 +60,23 @@ public static class MainMenuSceneBuilder
 
         Button playButton = BuildMenuButton(root, tmpResources, "Play Button", "PLAY", new Vector2(380, 40));
         Button settingsButton = BuildMenuButton(root, tmpResources, "Settings Button", "SETTINGS", new Vector2(380, -60));
-        Button quitButton = BuildMenuButton(root, tmpResources, "Quit Button", "QUIT", new Vector2(380, -160));
+        Button creditsButton = BuildMenuButton(root, tmpResources, "Credits Button", "CREDITS", new Vector2(380, -160));
+        Button quitButton = BuildMenuButton(root, tmpResources, "Quit Button", "QUIT", new Vector2(380, -260));
 
         GameObject settingsPanel = BuildSettingsPanel(root, tmpResources, uiResources, out Slider musicSlider, out Slider sfxSlider, out Button backButton);
+        GameObject creditsPanel = BuildCreditsPanel(root, tmpResources, out TextMeshProUGUI creditsText, out Button creditsBackButton);
 
         MainMenuController controller = canvasGO.AddComponent<MainMenuController>();
         SerializedObject so = new SerializedObject(controller);
         so.FindProperty("settingsPanel").objectReferenceValue = settingsPanel;
+        so.FindProperty("creditsPanel").objectReferenceValue = creditsPanel;
+        so.FindProperty("creditsFile").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(CreditsFilePath);
+        so.FindProperty("creditsText").objectReferenceValue = creditsText;
         so.FindProperty("playButton").objectReferenceValue = playButton;
         so.FindProperty("settingsButton").objectReferenceValue = settingsButton;
         so.FindProperty("backButton").objectReferenceValue = backButton;
+        so.FindProperty("creditsButton").objectReferenceValue = creditsButton;
+        so.FindProperty("creditsBackButton").objectReferenceValue = creditsBackButton;
         so.FindProperty("quitButton").objectReferenceValue = quitButton;
         so.FindProperty("musicSlider").objectReferenceValue = musicSlider;
         so.FindProperty("sfxSlider").objectReferenceValue = sfxSlider;
@@ -111,10 +121,15 @@ public static class MainMenuSceneBuilder
         RectTransform fill = CreateFramedPanel(root, "Description Panel", PanelColor, 4f);
         SetRect(fill.parent.GetComponent<RectTransform>(), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0), new Vector2(80, 80), new Vector2(680, 340));
 
-        TextMeshProUGUI heading = CreateText(fill, "Description Heading", "THE SIEGE OF CARTHAGE", 26, GoldColor, FontStyles.Bold, TextAlignmentOptions.TopLeft);
+        TextMeshProUGUI heading = CreateText(fill, "Description Heading", "HOW TO PLAY", 26, GoldColor, FontStyles.Bold, TextAlignmentOptions.TopLeft);
         SetRect(heading.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 1), new Vector2(24, -20), new Vector2(-48, 40));
 
-        TextMeshProUGUI body = CreateText(fill, "Description Text", "Rome's galleys are converging on the harbor of Carthage, wave after wave, hunting for the beating heart of the city. Raise war docks and resource towers along the Cothon, arm your ships, and upgrade your defenses between assaults. Survive as many waves as you can — the harbor falls the moment your last tower does.",
+        TextMeshProUGUI body = CreateText(fill, "Description Text",
+            "Build towers and docks along the Cothon to sink Rome's ships before they reach the Heart.\n\n"
+            + "• Select a building, then click the water or shore to place it (right-click cancels)\n"
+            + "• Click a placed tower to view stats, upgrade, or sell it\n"
+            + "• Pan with WASD / arrow keys, zoom with the scroll wheel, drag with the middle mouse button\n"
+            + "• Start the wave when ready, use the speed button to fast-forward, Esc to pause",
             22, CreamColor, FontStyles.Normal, TextAlignmentOptions.TopLeft);
         body.enableWordWrapping = true;
         SetRect(body.rectTransform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(24, -70), new Vector2(-48, -90));
@@ -175,6 +190,64 @@ public static class MainMenuSceneBuilder
         return backdrop.gameObject;
     }
 
+    private static GameObject BuildCreditsPanel(Transform root, TMP_DefaultControls.Resources tmpResources, out TextMeshProUGUI creditsText, out Button backButton)
+    {
+        Image backdrop = CreatePanel(root, "Credits Panel", new Color(0f, 0f, 0f, .72f));
+        StretchFull(backdrop.rectTransform);
+
+        RectTransform box = CreateFramedPanel(backdrop.transform, "Credits Box", PanelColor, 4f).parent.GetComponent<RectTransform>();
+        SetRect(box, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(900, 700));
+        Transform boxFill = box.Find("Credits Box Fill");
+
+        TextMeshProUGUI title = CreateText(boxFill, "Credits Title", "CREDITS", 42, GoldColor, FontStyles.Bold, TextAlignmentOptions.Center);
+        SetRect(title.rectTransform, new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0, -30), new Vector2(500, 60));
+
+        // Mask lives directly on the scroll view's own object rather than a separate viewport child —
+        // simplest layout that still clips content to the visible area.
+        GameObject scrollGO = new GameObject("Credits Scroll View", typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
+        scrollGO.transform.SetParent(boxFill, false);
+        Image scrollBg = scrollGO.GetComponent<Image>();
+        scrollBg.color = new Color(0f, 0f, 0f, .25f);
+        RectTransform scrollRt = (RectTransform)scrollGO.transform;
+        SetStretch(scrollRt, 24, 24, 110, 90);
+
+        creditsText = CreateText(scrollRt, "Credits Content", "", 24, CreamColor, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+        creditsText.enableWordWrapping = true;
+        creditsText.overflowMode = TextOverflowModes.Overflow;
+        RectTransform contentRt = creditsText.rectTransform;
+        contentRt.anchorMin = new Vector2(0, 1);
+        contentRt.anchorMax = new Vector2(1, 1);
+        contentRt.pivot = new Vector2(.5f, 1f);
+        contentRt.anchoredPosition = new Vector2(0, 0);
+        contentRt.sizeDelta = new Vector2(-32, 0);
+        ContentSizeFitter fitter = creditsText.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        ScrollRect scrollRect = scrollGO.GetComponent<ScrollRect>();
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.viewport = scrollRt;
+        scrollRect.content = contentRt;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.scrollSensitivity = 24f;
+
+        GameObject backGO = TMP_DefaultControls.CreateButton(tmpResources);
+        backGO.name = "Credits Back Button";
+        backGO.transform.SetParent(boxFill, false);
+        SetRect((RectTransform)backGO.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 40), new Vector2(220, 64));
+        backButton = backGO.GetComponent<Button>();
+        StyleButton(backButton, ButtonColor);
+        TextMeshProUGUI backText = backGO.GetComponentInChildren<TextMeshProUGUI>();
+        backText.text = "BACK";
+        backText.fontSize = 26;
+        backText.fontStyle = FontStyles.Bold;
+        backText.color = CreamColor;
+
+        backdrop.gameObject.SetActive(false);
+        return backdrop.gameObject;
+    }
+
     private static Slider BuildSlider(Transform parent, DefaultControls.Resources uiResources, string name, Vector2 anchoredPosition, float value)
     {
         GameObject sliderGO = DefaultControls.CreateSlider(uiResources);
@@ -200,25 +273,12 @@ public static class MainMenuSceneBuilder
         return slider;
     }
 
-    // Selectable's ColorTint multiplies the target graphic's own color by these, so the Image keeps the
-    // real theme color and normalColor stays white (identity); only the highlight/press tints vary around it.
-    private static void StyleButton(Button button, Color normal)
-    {
-        button.GetComponent<Image>().color = normal;
-        ColorBlock colors = button.colors;
-        colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f);
-        colors.pressedColor = new Color(.75f, .75f, .75f);
-        colors.selectedColor = Color.white;
-        button.colors = colors;
-    }
+    private static void StyleButton(Button button, Color normal) => CarthageTheme.StyleButton(button, normal);
 
     private static RectTransform CreateFramedPanel(Transform parent, string name, Color fillColor, float borderThickness)
     {
-        Image outer = CreatePanel(parent, name, BorderColor);
-        Image inner = CreatePanel(outer.transform, name + " Fill", fillColor);
-        StretchInset(inner.rectTransform, borderThickness);
-        return inner.rectTransform;
+        RectTransform outer = CarthageTheme.CreateFramedPanel(name, parent, fillColor, borderThickness);
+        return (RectTransform)outer.Find(name + " Fill");
     }
 
     private static Image CreatePanel(Transform parent, string name, Color color)
@@ -252,12 +312,12 @@ public static class MainMenuSceneBuilder
         rt.offsetMax = Vector2.zero;
     }
 
-    private static void StretchInset(RectTransform rt, float inset)
+    private static void SetStretch(RectTransform rt, float left, float right, float top, float bottom)
     {
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
-        rt.offsetMin = new Vector2(inset, inset);
-        rt.offsetMax = new Vector2(-inset, -inset);
+        rt.offsetMin = new Vector2(left, bottom);
+        rt.offsetMax = new Vector2(-right, -top);
     }
 
     private static void SetRect(RectTransform rt, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, Vector2 sizeDelta)

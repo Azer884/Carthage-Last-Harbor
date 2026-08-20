@@ -24,6 +24,7 @@ MonoBehaviour:
     upgradeCost: 75
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips:
     - shipName: Ram Galley
       shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
@@ -35,6 +36,7 @@ MonoBehaviour:
     upgradeCost: 150
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 4
     unlockedShips:
     - shipName: Ram Galley
       shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
@@ -52,6 +54,7 @@ MonoBehaviour:
     upgradeCost: 250
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 5
     unlockedShips:
     - shipName: Ram Galley
       shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}
@@ -75,6 +78,7 @@ MonoBehaviour:
     upgradeCost: 400
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 6
     unlockedShips:
     - shipName: Ram Galley
       shipPrefab: {fileID: 1894955218396573780, guid: 344471e42b7de3f488ac8d3855a2fb0e, type: 3}

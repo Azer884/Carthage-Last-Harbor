@@ -12,8 +12,11 @@ public class TowerSelectionManager : MonoBehaviour
     private TowerPlacementController _placement;
     private DragonTowerPlacementController _dragonPlacement;
     private GameObject _selected;
-    private Outline _selectedOutline;
-    private Outline _hoverOutline;
+    // Multi-part models (e.g. Sidi Bou Said) carry an Outline on every mesh piece, not just one, so the
+    // whole silhouette lights up together instead of a single arbitrary part.
+    private Outline[] _selectedOutlines = System.Array.Empty<Outline>();
+    private GameObject _hoverTarget;
+    private Outline[] _hoverOutlines = System.Array.Empty<Outline>();
     private SightRangeRing _selectedRing;
     private GameObject _panel;
     private TextMeshProUGUI _title;
@@ -22,6 +25,7 @@ public class TowerSelectionManager : MonoBehaviour
     private TextMeshProUGUI _upgradeText;
     private TextMeshProUGUI _upgradeHint;
     private Button _sell;
+    private TextMeshProUGUI _sellText;
     private Button[] _trainButtons;
     private TextMeshProUGUI[] _trainButtonTexts;
     private TMP_InputField[] _trainInputs;
@@ -89,7 +93,8 @@ public class TowerSelectionManager : MonoBehaviour
         GameObject hovered = GetBuildingUnderPointer(camera, Mouse.current.position.ReadValue());
         SetHover(hovered);
         if (!Mouse.current.leftButton.wasPressedThisFrame) return;
-        if (hovered != null) Select(hovered); else Deselect();
+        if (hovered != null) { SfxManager.Instance?.PlayButtonClick(); Select(hovered); }
+        else if (_selected != null) { SfxManager.Instance?.PlayButtonClick(); Deselect(); }
     }
 
     private GameObject GetBuildingUnderPointer(Camera camera, Vector2 screenPoint)
@@ -116,9 +121,9 @@ public class TowerSelectionManager : MonoBehaviour
         Deselect();
         _selected = building;
         // Active-only: towers built from per-level model children (Outline on each) only ever have one
-        // active at a time, so this reliably resolves whichever level is currently showing.
-        _selectedOutline = building.GetComponentInChildren<Outline>();
-        if (_selectedOutline != null) _selectedOutline.enabled = true;
+        // level active at a time, so this only ever picks up whichever level is currently showing.
+        _selectedOutlines = building.GetComponentsInChildren<Outline>();
+        foreach (Outline outline in _selectedOutlines) outline.enabled = true;
         if (TryGetRangeVisual(building, out float range, out Color rangeColor))
         {
             _selectedRing = building.GetComponent<SightRangeRing>();
@@ -132,10 +137,10 @@ public class TowerSelectionManager : MonoBehaviour
 
     public void Deselect()
     {
-        if (_selectedOutline != null) _selectedOutline.enabled = false;
+        foreach (Outline outline in _selectedOutlines) outline.enabled = false;
         if (_selectedRing != null) _selectedRing.Hide();
         if (_selected != null && _selected.GetComponent<CartageHeart>() != null) MercenaryMarketUI.Instance?.Hide();
-        _selected = null; _selectedOutline = null; _selectedRing = null;
+        _selected = null; _selectedOutlines = System.Array.Empty<Outline>(); _selectedRing = null;
         HidePanel();
     }
 
@@ -179,11 +184,14 @@ public class TowerSelectionManager : MonoBehaviour
 
     private void SetHover(GameObject building)
     {
-        Outline next = building != null ? building.GetComponentInChildren<Outline>() : null;
-        if (_hoverOutline == next) return;
-        if (_hoverOutline != null && _hoverOutline != _selectedOutline) _hoverOutline.enabled = false;
-        _hoverOutline = next;
-        if (_hoverOutline != null) _hoverOutline.enabled = true;
+        if (_hoverTarget == building) return;
+        // Leave outlines the selection is still using alone — otherwise moving the mouse off a selected
+        // building would turn its glow off even though it's still selected.
+        foreach (Outline outline in _hoverOutlines)
+            if (System.Array.IndexOf(_selectedOutlines, outline) < 0) outline.enabled = false;
+        _hoverTarget = building;
+        _hoverOutlines = building != null ? building.GetComponentsInChildren<Outline>() : System.Array.Empty<Outline>();
+        foreach (Outline outline in _hoverOutlines) outline.enabled = true;
     }
 
     private void SetAllSelectableOutlines(bool enabled)
@@ -250,16 +258,16 @@ public class TowerSelectionManager : MonoBehaviour
         GameObject root = new GameObject("Selected Tower UI", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 110;
         CanvasScaler scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080);
-        GameObject panel = new GameObject("Tower Details", typeof(Image)); panel.transform.SetParent(root.transform, false);
-        Image image = panel.GetComponent<Image>(); image.color = new Color(.025f, .035f, .06f, .95f);
-        RectTransform rect = panel.GetComponent<RectTransform>(); rect.anchorMin = new Vector2(.72f, .25f); rect.anchorMax = new Vector2(.98f, .75f); rect.offsetMin = rect.offsetMax = Vector2.zero;
-        _panel = panel;
+        RectTransform panel = CarthageTheme.CreateFramedPanel("Tower Details", root.transform, CarthageTheme.Panel, 3f);
+        panel.anchorMin = new Vector2(.72f, .25f); panel.anchorMax = new Vector2(.98f, .75f); panel.offsetMin = panel.offsetMax = Vector2.zero;
+        _panel = panel.gameObject;
         _title = CreateText(panel.transform, 23, TextAnchor.UpperCenter, new Vector2(.06f, .79f), new Vector2(.94f, .95f));
+        _title.color = CarthageTheme.Gold; _title.fontStyle = FontStyles.Bold;
         _details = CreateScrollableText(panel.transform, new Vector2(.06f, .28f), new Vector2(.94f, .78f));
         _upgradeHint = CreateText(panel.transform, 13, TextAnchor.MiddleCenter, new Vector2(.08f, .255f), new Vector2(.92f, .29f));
-        _upgradeHint.color = new Color(1f, .85f, .35f, 1f);
+        _upgradeHint.color = CarthageTheme.Gold;
         Button close = CreateButton(panel.transform, new Vector2(.82f, .87f), new Vector2(.94f, .95f));
-        close.GetComponent<Image>().color = new Color(.38f, .12f, .1f, 1f);
+        close.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
         close.GetComponentInChildren<TextMeshProUGUI>().text = "X";
         close.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); Deselect(); });
         _upgrade = CreateButton(panel.transform, new Vector2(.08f, .15f), new Vector2(.92f, .25f));
@@ -268,8 +276,9 @@ public class TowerSelectionManager : MonoBehaviour
         UpgradeRequirementHover upgradeHover = _upgrade.gameObject.AddComponent<UpgradeRequirementHover>();
         upgradeHover.Initialize(this);
         _sell = CreateButton(panel.transform, new Vector2(.08f, .04f), new Vector2(.92f, .13f));
-        _sell.GetComponent<Image>().color = new Color(.5f, .14f, .10f, 1f);
-        _sell.GetComponentInChildren<TextMeshProUGUI>().text = "SELL";
+        _sell.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
+        _sellText = _sell.GetComponentInChildren<TextMeshProUGUI>();
+        _sellText.text = "SELL";
         _sell.onClick.AddListener(SellSelected);
 
         _trainButtons = new Button[3];
@@ -321,7 +330,7 @@ public class TowerSelectionManager : MonoBehaviour
     {
         GameObject obj = new GameObject("Text", typeof(TextMeshProUGUI)); obj.transform.SetParent(parent, false);
         TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
-        text.fontSize = size; text.color = Color.white; text.alignment = TmpTextUtility.ToTmpAlignment(anchor);
+        text.fontSize = size; text.color = CarthageTheme.Cream; text.alignment = TmpTextUtility.ToTmpAlignment(anchor);
         text.enableWordWrapping = true; text.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = text.rectTransform; rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         return text;
@@ -347,7 +356,7 @@ public class TowerSelectionManager : MonoBehaviour
         GameObject contentObject = new GameObject("Content", typeof(TextMeshProUGUI), typeof(ContentSizeFitter));
         contentObject.transform.SetParent(viewportObject.transform, false);
         TextMeshProUGUI text = contentObject.GetComponent<TextMeshProUGUI>();
-        text.fontSize = 17; text.color = Color.white; text.alignment = TextAlignmentOptions.TopLeft;
+        text.fontSize = 17; text.color = CarthageTheme.Cream; text.alignment = TextAlignmentOptions.TopLeft;
         text.enableWordWrapping = true; text.overflowMode = TextOverflowModes.Overflow;
         RectTransform contentRect = contentObject.GetComponent<RectTransform>();
         contentRect.anchorMin = new Vector2(0f, 1f); contentRect.anchorMax = new Vector2(1f, 1f); contentRect.pivot = new Vector2(.5f, 1f);
@@ -390,9 +399,10 @@ public class TowerSelectionManager : MonoBehaviour
     private Button CreateButton(Transform parent, Vector2 min, Vector2 max)
     {
         GameObject obj = new GameObject("Button", typeof(Image), typeof(Button)); obj.transform.SetParent(parent, false);
-        obj.GetComponent<Image>().color = new Color(.14f, .35f, .16f, 1f);
+        obj.GetComponent<Image>().color = CarthageTheme.ButtonPositive;
         RectTransform rect = obj.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         TextMeshProUGUI text = CreateText(obj.transform, 16, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one); text.text = "UPGRADE";
+        text.color = CarthageTheme.Cream;
         return obj.GetComponent<Button>();
     }
 
@@ -409,6 +419,7 @@ public class TowerSelectionManager : MonoBehaviour
     {
         if (_selected == null || _panel == null) return;
         SetActiveSafe(_sell.gameObject, true);
+        if (_sellText != null) _sellText.text = "SELL";
         foreach (Button trainButton in _trainButtons) SetActiveSafe(trainButton.gameObject, false);
         foreach (TMP_InputField trainInput in _trainInputs) SetActiveSafe(trainInput.gameObject, false);
         CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
@@ -457,10 +468,12 @@ public class TowerSelectionManager : MonoBehaviour
             _title.text = _selected.name.Replace("(Clone)", string.Empty).Trim();
             _details.text = "Crew aboard: " + (crew != null ? crew.CrewNumber : 0)
                 + "\nDamage: " + ship.AttackDamage + "\nSight range: " + ship.SightRange + "\nAttack range: " + ship.AttackRange + "\nAttack cooldown: " + ship.AttackCooldown + " sec"
-                + "\n" + ShipCounterTable.Describe(ship.CombatClass);
+                + "\n" + ShipCounterTable.Describe(ship.CombatClass)
+                + "\n\nScuttling returns its surviving crew to the roster and frees a build slot at its dock.";
             SetActiveSafe(_upgrade.gameObject, false);
             _upgradeHint.text = string.Empty;
-            SetActiveSafe(_sell.gameObject, false);
+            SetActiveSafe(_sell.gameObject, true);
+            if (_sellText != null) _sellText.text = "SCUTTLE";
             return;
         }
         CarthaginianResourceTower resource = _selected.GetComponent<CarthaginianResourceTower>();
@@ -493,7 +506,8 @@ public class TowerSelectionManager : MonoBehaviour
         if (sidiBouSaid != null) return "Generates " + sidiBouSaid.CrewPerSecond.ToString("0.00") + " crew/sec";
         TowerLevel level = tower.ActiveLevel;
         if (level == null || level.unlockedShips == null || level.unlockedShips.Length == 0) return "No ships unlocked.";
-        System.Text.StringBuilder output = new System.Text.StringBuilder("Available ships:");
+        System.Text.StringBuilder output = new System.Text.StringBuilder("Ships at sea: ").Append(tower.ActiveShipCount).Append(" / ").Append(tower.MaxActiveShips);
+        output.Append("\n\nAvailable ships:");
         foreach (CarthaginianShipOption ship in level.unlockedShips)
         {
             if (ship == null) continue;
@@ -521,7 +535,20 @@ public class TowerSelectionManager : MonoBehaviour
     private void UpgradeSelected()
     {
         SfxManager.Instance?.PlayButtonClick();
-        if (_selected != null) _selected.GetComponent<CarthaginianTower>()?.TryUpgrade();
+        if (_selected == null) return;
+        CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
+        if (tower != null && tower.TryUpgrade()) RefreshSelectedOutlines();
+    }
+
+    // Upgrading swaps which level's model is active (a different per-level child, or — for Sidi Bou Said —
+    // a different explicit model reference), so the outline set captured back at selection time is stale
+    // the instant that happens. Without this the tower would look deselected right after upgrading, since
+    // the old level's (now inactive) outlines are the only ones still tracked as "on".
+    private void RefreshSelectedOutlines()
+    {
+        foreach (Outline outline in _selectedOutlines) outline.enabled = false;
+        _selectedOutlines = _selected != null ? _selected.GetComponentsInChildren<Outline>() : System.Array.Empty<Outline>();
+        foreach (Outline outline in _selectedOutlines) outline.enabled = true;
     }
     private void TrainSelected(CrewRank rank, int inputIndex)
     {
@@ -548,7 +575,13 @@ public class TowerSelectionManager : MonoBehaviour
     {
         SfxManager.Instance?.PlayButtonClick();
         if (_selected == null) return;
-        if (_selected.GetComponent<CarthaginianShipCombat>() != null) return;
+        if (_selected.GetComponent<CarthaginianShipCombat>() != null)
+        {
+            // No coin refund for scuttling — the payoff is CarthaginianShipCrew.OnDestroy() returning its
+            // surviving crew to the roster and freeing a ship-capacity slot at its launching tower.
+            GameObject ship = _selected; Deselect(); Destroy(ship);
+            return;
+        }
         CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
         if (tower != null && !tower.Sellable) return;
         if (_selected.GetComponent<JemColosseum>() != null) return;

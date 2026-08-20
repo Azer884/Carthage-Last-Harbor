@@ -24,6 +24,7 @@ public class LighthouseSpawner : MonoBehaviour
     {
         TowerLevel level = _tower.ActiveLevel;
         if (level == null || level.unlockedShips == null || level.unlockedShips.Length == 0 || CrewRoster.Instance == null) return false;
+        if (!_tower.HasShipCapacity) return false;
         List<CarthaginianShipOption> affordableShips = new List<CarthaginianShipOption>();
         foreach (CarthaginianShipOption candidate in level.unlockedShips)
             if (candidate != null && CanAfford(candidate)) affordableShips.Add(candidate);
@@ -51,7 +52,7 @@ public class LighthouseSpawner : MonoBehaviour
 
     public bool TrySpawnShip(CarthaginianShipOption option)
     {
-        if (option == null || !CanAfford(option) || CrewRoster.Instance == null) return false;
+        if (option == null || !CanAfford(option) || CrewRoster.Instance == null || !_tower.HasShipCapacity) return false;
         _nextSpawnTime = Time.time + option.spawnCooldown;
         if (option.shipPrefab == null || !CrewRoster.Instance.TryAssignCrew(option.minimumRank, option.crewRequired, out CrewCount[] crew)) return false;
         if (!EconomyManager.Instance.TrySpend(option.shipCost))
@@ -62,7 +63,12 @@ public class LighthouseSpawner : MonoBehaviour
         Transform point = launchPoint != null ? launchPoint : transform;
         GameObject ship = Instantiate(option.shipPrefab, point.position, point.rotation);
         CarthaginianShipCrew shipCrew = ship.GetComponent<CarthaginianShipCrew>();
-        if (shipCrew != null) shipCrew.AssignCrew(crew);
+        if (shipCrew != null)
+        {
+            shipCrew.AssignCrew(crew);
+            shipCrew.SetOriginTower(_tower);
+            _tower.RegisterShip(shipCrew);
+        }
         SpawnPopEffect.Apply(ship);
         SfxManager.Instance?.PlayShipSpawned();
         if (option.shipCost > 0)

@@ -12,10 +12,12 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
     private float _health;
     private float _maxHealth;
     private FloatingHealthBar _healthBar;
+    private CarthaginianTower _originTower;
     public Transform TargetTransform => transform;
     public CarthaginianTargetType TargetType => CarthaginianTargetType.Ship;
     public bool IsDestroyed => _health <= 0f;
     public int CrewNumber { get { int total = 0; foreach (CrewCount count in _crew) total += count.amount; return total; } }
+    public void SetOriginTower(CarthaginianTower tower) => _originTower = tower;
     public float DamageMultiplier
     {
         get
@@ -74,6 +76,9 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
 
     private void OnDestroy()
     {
+        // Frees the launching tower's ship-capacity slot regardless of how the ship met its end — sunk in
+        // combat or scuttled by the player via TowerSelectionManager.
+        if (_originTower != null) _originTower.UnregisterShip(this);
         if (!returnSurvivingCrewToRoster || IsDestroyed || CrewRoster.Instance == null) return;
         foreach (CrewCount count in _crew) CrewRoster.Instance.AddCrew(count.rank, count.amount, count.isMercenary);
     }

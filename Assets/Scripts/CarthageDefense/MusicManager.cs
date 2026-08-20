@@ -8,6 +8,7 @@ public class MusicManager : MonoBehaviour
     public static MusicManager Instance { get; private set; }
     private const string MusicVolumeKey = "CarthageDefense.MusicVolume";
 
+    [SerializeField] private AudioClip menuMusic;
     [SerializeField] private AudioClip buildMusic;
     [SerializeField] private AudioClip waveMusic;
     [SerializeField] private AudioClip gameOverMusic;
@@ -39,11 +40,10 @@ public class MusicManager : MonoBehaviour
         _active = _sourceA;
     }
 
-    private void Start()
-    {
-        PlayBuildMusic();
-    }
-
+    // No auto-played default track here: the singleton can now first spin up from either MainMenu or
+    // GameScene (whichever loads first), so each scene's own controller explicitly requests its track
+    // instead of this manager guessing which one it should be.
+    public void PlayMenuMusic() => Crossfade(menuMusic);
     public void PlayBuildMusic() => Crossfade(buildMusic);
     public void PlayWaveMusic() => Crossfade(waveMusic);
     public void PlayGameOverMusic() => Crossfade(gameOverMusic);

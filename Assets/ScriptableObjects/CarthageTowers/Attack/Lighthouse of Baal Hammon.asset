@@ -25,6 +25,7 @@ MonoBehaviour:
     upgradeCost: 50
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips:
     - shipName: Libyan patrol boat
       shipPrefab: {fileID: 2127971777563762160, guid: d9c775849359134458f51a1137242f8c, type: 3}
@@ -36,6 +37,7 @@ MonoBehaviour:
     upgradeCost: 100
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 4
     unlockedShips:
     - shipName: Libyan patrol boat
       shipPrefab: {fileID: 2127971777563762160, guid: d9c775849359134458f51a1137242f8c, type: 3}
@@ -53,6 +55,7 @@ MonoBehaviour:
     upgradeCost: 175
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 5
     unlockedShips:
     - shipName: Libyan patrol boat
       shipPrefab: {fileID: 2127971777563762160, guid: d9c775849359134458f51a1137242f8c, type: 3}
@@ -76,6 +79,7 @@ MonoBehaviour:
     upgradeCost: 275
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 6
     unlockedShips:
     - shipName: Libyan patrol boat
       shipPrefab: {fileID: 2127971777563762160, guid: d9c775849359134458f51a1137242f8c, type: 3}

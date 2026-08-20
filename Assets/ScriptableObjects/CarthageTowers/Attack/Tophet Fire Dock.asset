@@ -17,14 +17,15 @@ MonoBehaviour:
     ship prefabs with fire/explosion behavior later.
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   category: 0
-  prefab: {fileID: 100002000001, guid: b2c3d4e5f647a8b9c0d1e2f3a4b5c6d7, type: 3}
+  prefab: {fileID: 2407846119100007858, guid: afd35eef3c803f044bde853e1eee9a9f, type: 3}
   buildCost: 50
-  requiredZoneId:
+  requiredZoneId: 
   levels:
   - title: I
     upgradeCost: 90
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 2
     unlockedShips:
     - shipName: Fire Raft
       shipPrefab: {fileID: 2535866662755049011, guid: dd4662cd531916643aa972958938a5b6, type: 3}
@@ -36,6 +37,7 @@ MonoBehaviour:
     upgradeCost: 180
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips:
     - shipName: Fire Raft
       shipPrefab: {fileID: 2535866662755049011, guid: dd4662cd531916643aa972958938a5b6, type: 3}
@@ -53,6 +55,7 @@ MonoBehaviour:
     upgradeCost: 300
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 4
     unlockedShips:
     - shipName: Fire Raft
       shipPrefab: {fileID: 2535866662755049011, guid: dd4662cd531916643aa972958938a5b6, type: 3}
@@ -76,6 +79,7 @@ MonoBehaviour:
     upgradeCost: 475
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 5
     unlockedShips:
     - shipName: Fire Raft
       shipPrefab: {fileID: 2535866662755049011, guid: dd4662cd531916643aa972958938a5b6, type: 3}

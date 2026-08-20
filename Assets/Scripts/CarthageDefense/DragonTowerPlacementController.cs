@@ -42,15 +42,22 @@ public class DragonTowerPlacementController : MonoBehaviour
     private void Update()
     {
         if (!IsPlacing || Mouse.current == null) return;
-        if (Mouse.current.rightButton.wasPressedThisFrame) { CancelPlacement(); return; }
+        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); return; }
         Camera cam = placementCamera != null ? placementCamera : Camera.main;
         if (cam == null) { SetPreviewVisible(false); return; }
         GameObject slot = FindSlotUnderPointer(cam, Mouse.current.position.ReadValue());
         bool valid = slot != null && !IsOccupied(slot);
         UpdatePreview(slot, valid);
         if (!Mouse.current.leftButton.wasPressedThisFrame || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) return;
-        if (!valid) { SfxManager.Instance?.PlayPlacementInvalid(); return; }
-        TryPlace(slot);
+        if (!valid)
+        {
+            // A slot-less click has no good world position to anchor text on — just the sting, same as
+            // before. An occupied slot does, so it gets the full explain-why treatment.
+            if (slot != null) ErrorFeedback.Show(slot.transform.position, "Slot occupied");
+            else SfxManager.Instance?.PlayPlacementInvalid();
+            return;
+        }
+        if (!TryPlace(slot)) ErrorFeedback.Show(slot.transform.position, "Not enough coin");
     }
 
     private bool TryPlace(GameObject slot)

@@ -63,21 +63,19 @@ public class MercenaryMarketUI : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
-        GameObject panel = new GameObject("Mercenary Market Panel", typeof(Image));
-        panel.transform.SetParent(root.transform, false);
-        panel.GetComponent<Image>().color = new Color(.025f, .035f, .06f, .96f);
-        RectTransform rect = panel.GetComponent<RectTransform>();
+        RectTransform rect = CarthageTheme.CreateFramedPanel("Mercenary Market Panel", root.transform, CarthageTheme.Panel, 3f);
         rect.anchorMin = new Vector2(.30f, .18f);
         rect.anchorMax = new Vector2(.70f, .80f);
         rect.offsetMin = rect.offsetMax = Vector2.zero;
-        _panel = panel;
+        _panel = rect.gameObject;
 
-        CreateText("MERCENARY MARKET", 23, TextAnchor.UpperCenter, new Vector2(.05f, .89f), new Vector2(.86f, .98f));
+        TextMeshProUGUI title = CreateText("MERCENARY MARKET", 23, TextAnchor.UpperCenter, new Vector2(.05f, .89f), new Vector2(.86f, .98f));
+        title.color = CarthageTheme.Gold; title.fontStyle = FontStyles.Bold;
         _debtText = CreateText(string.Empty, 14, TextAnchor.UpperCenter, new Vector2(.05f, .83f), new Vector2(.95f, .89f));
         _debtText.color = new Color(1f, .55f, .3f);
 
         Button close = CreateButton(new Vector2(.88f, .90f), new Vector2(.97f, .98f));
-        close.GetComponent<Image>().color = new Color(.38f, .12f, .1f, 1f);
+        close.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
         close.GetComponentInChildren<TextMeshProUGUI>().text = "X";
         close.onClick.AddListener(() => { SfxManager.Instance?.PlayButtonClick(); TowerSelectionManager.Instance?.Deselect(); });
 
@@ -175,7 +173,7 @@ public class MercenaryMarketUI : MonoBehaviour
         GameObject obj = new GameObject("Text", typeof(TextMeshProUGUI));
         obj.transform.SetParent(_panel.transform, false);
         TextMeshProUGUI result = obj.GetComponent<TextMeshProUGUI>();
-        result.text = text; result.fontSize = size; result.alignment = TmpTextUtility.ToTmpAlignment(anchor); result.color = Color.white;
+        result.text = text; result.fontSize = size; result.alignment = TmpTextUtility.ToTmpAlignment(anchor); result.color = CarthageTheme.Cream;
         result.enableWordWrapping = true; result.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = result.rectTransform; rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         return result;
@@ -185,12 +183,12 @@ public class MercenaryMarketUI : MonoBehaviour
     {
         GameObject obj = new GameObject("Button", typeof(Image), typeof(Button));
         obj.transform.SetParent(_panel.transform, false);
-        obj.GetComponent<Image>().color = new Color(.14f, .35f, .16f, 1f);
+        obj.GetComponent<Image>().color = CarthageTheme.ButtonPositive;
         RectTransform rect = obj.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = rect.offsetMax = Vector2.zero;
         GameObject textObject = new GameObject("Text", typeof(TextMeshProUGUI));
         textObject.transform.SetParent(obj.transform, false);
         TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.fontSize = 14; text.alignment = TextAlignmentOptions.Center; text.color = Color.white; text.text = "BUY";
+        text.fontSize = 14; text.alignment = TextAlignmentOptions.Center; text.color = CarthageTheme.Cream; text.text = "BUY";
         RectTransform textRect = text.rectTransform; textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one; textRect.offsetMin = textRect.offsetMax = Vector2.zero;
         return obj.GetComponent<Button>();
     }
@@ -205,7 +203,7 @@ public class MercenaryMarketUI : MonoBehaviour
         GameObject textObject = new GameObject("Text", typeof(TextMeshProUGUI));
         textObject.transform.SetParent(obj.transform, false);
         TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.fontSize = 14; text.alignment = TextAlignmentOptions.Center; text.color = Color.white;
+        text.fontSize = 14; text.alignment = TextAlignmentOptions.Center; text.color = CarthageTheme.Cream;
         RectTransform textRect = text.rectTransform; textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one; textRect.offsetMin = new Vector2(4f, 2f); textRect.offsetMax = new Vector2(-4f, -2f);
 
         TMP_InputField field = obj.GetComponent<TMP_InputField>();

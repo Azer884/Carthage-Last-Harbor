@@ -46,6 +46,8 @@ public class CarthaginianResourceTower : MonoBehaviour
         int earned = _storedUnits * definition.sellValuePerUnit;
         _storedUnits = 0;
         EconomyManager.Instance.AddMoney(earned);
+        FloatingCombatText.Spawn(transform.position, "+" + earned + " coin", new Color(.35f, 1f, .3f));
+        SfxManager.Instance?.PlayCoinGained();
         return earned;
     }
 

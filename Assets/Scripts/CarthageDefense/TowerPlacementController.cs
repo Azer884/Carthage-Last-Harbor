@@ -48,18 +48,36 @@ public class TowerPlacementController : MonoBehaviour
     private void Update()
     {
         if (!IsPlacing || Mouse.current == null) return;
-        if (Mouse.current.rightButton.wasPressedThisFrame) { CancelPlacement(); return; }
+        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); return; }
         Camera cam = placementCamera != null ? placementCamera : Camera.main;
         if (cam == null) return;
         LayerMask placementMask = _selectedResourceTower != null && _selectedResourceTower.environment == ResourceEnvironment.Land ? landMask : seaMask;
         if (!Physics.Raycast(cam.ScreenPointToRay(Mouse.current.position.ReadValue()), out RaycastHit hit, 500f, placementMask)) { SetPreviewVisible(false); return; }
         bool valid = _selectedResourceTower != null ? IsValidResourcePlacement(_selectedResourceTower, hit.point) : IsValidPlacement(_selectedTower, hit.point);
-        UpdatePreview(hit.point, valid);
-        if (!Mouse.current.leftButton.wasPressedThisFrame || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) || !valid) return;
+        // Only land buildings tilt with the ground — sea docks/ships should stay level regardless of the
+        // seabed underneath, so they keep an upright identity rotation like before.
+        Quaternion rotation = _selectedResourceTower != null && _selectedResourceTower.environment == ResourceEnvironment.Land
+            ? Quaternion.FromToRotation(Vector3.up, hit.normal)
+            : Quaternion.identity;
+        UpdatePreview(hit.point, rotation, valid);
+        if (!Mouse.current.leftButton.wasPressedThisFrame || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())) return;
+        if (!valid)
+        {
+            // Worker shortage gets its own specific callout; every other invalid reason (wrong terrain, too
+            // close to another building, etc.) is visually obvious from the red ghost but still gets the
+            // same shake/sfx so a rejected click is never just silence.
+            string reason = _selectedResourceTower != null && !HasEnoughWorkers(_selectedResourceTower)
+                ? "Not enough workers" : "Can't build here";
+            ErrorFeedback.Show(hit.point, reason);
+            return;
+        }
         bool placed = _selectedResourceTower != null
-            ? TryPlaceResource(_selectedResourceTower, hit.point, Quaternion.identity)
-            : TryPlace(_selectedTower, hit.point, Quaternion.identity);
-        if (placed) CancelPlacement();
+            ? TryPlaceResource(_selectedResourceTower, hit.point, rotation)
+            : TryPlace(_selectedTower, hit.point, rotation);
+        // The spot was valid but the attempt still failed — the only remaining reason is coin spent
+        // elsewhere between selecting the tower and clicking to place it.
+        if (!placed) { ErrorFeedback.Show(hit.point, "Not enough coin"); return; }
+        CancelPlacement();
     }
 
     public bool TryPlace(CarthaginianTowerDefinition definition, Vector3 position, Quaternion rotation)
@@ -99,13 +117,22 @@ public class TowerPlacementController : MonoBehaviour
         LayerMask environmentMask = definition.environment == ResourceEnvironment.Sea ? seaMask : landMask;
         if (!Physics.CheckSphere(position, 0.15f, environmentMask, QueryTriggerInteraction.Ignore)) return false;
         if (definition.environment == ResourceEnvironment.Sea && IsCoveredByLand(position)) return false;
+        // The Land-layer raycast that finds this position only tests the terrain heightmap, which keeps
+        // going under the water — without this, a land building could plant itself on the submerged seabed.
+        if (definition.environment == ResourceEnvironment.Land && IsCoveredBySea(position)) return false;
         if (IsNearEnemyPath(position)) return false;
         if (IsObstructed(position)) return false;
+        if (!HasEnoughWorkers(definition)) return false;
         if (string.IsNullOrEmpty(definition.requiredZoneId)) return true;
         foreach (TowerPlacementZone zone in FindObjectsByType<TowerPlacementZone>(FindObjectsSortMode.None))
             if (zone.ZoneId == definition.requiredZoneId && zone.Contains(position)) return true;
         return false;
     }
+
+    // Building an extractor nobody can staff would just sit there producing nothing forever, so treat an
+    // unstaffable spot as invalid rather than letting the player waste coin on a dead building.
+    private bool HasEnoughWorkers(CarthaginianResourceDefinition definition) =>
+        WorkerRoster.Instance == null || WorkerRoster.Instance.AvailableWorkers >= definition.workersRequired;
 
     private bool IsNearEnemyPath(Vector3 position)
     {
@@ -121,6 +148,15 @@ public class TowerPlacementController : MonoBehaviour
     {
         Vector3 origin = position + Vector3.up * 500f;
         return Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, landMask, QueryTriggerInteraction.Ignore)
+            && hit.point.y > position.y + 0.05f;
+    }
+
+    // Mirror of IsCoveredByLand for the opposite case: rejects a land placement whose terrain point sits
+    // beneath the sea/water surface (a bay, a submerged shelf) rather than actually above water.
+    private bool IsCoveredBySea(Vector3 position)
+    {
+        Vector3 origin = position + Vector3.up * 500f;
+        return Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, seaMask, QueryTriggerInteraction.Ignore)
             && hit.point.y > position.y + 0.05f;
     }
 
@@ -150,14 +186,14 @@ public class TowerPlacementController : MonoBehaviour
                 material.renderQueue = 3000;
                 material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             }
-        UpdatePreview(Vector3.zero, false);
+        UpdatePreview(Vector3.zero, Quaternion.identity, false);
     }
 
-    private void UpdatePreview(Vector3 position, bool isValid)
+    private void UpdatePreview(Vector3 position, Quaternion rotation, bool isValid)
     {
         if (_placementPreview == null) return;
         if (_previewProperties == null) _previewProperties = new MaterialPropertyBlock();
-        _placementPreview.transform.position = position;
+        _placementPreview.transform.SetPositionAndRotation(position, rotation);
         SetPreviewVisible(true);
         Color color = isValid ? new Color(.1f, 1f, .25f, .48f) : new Color(1f, .08f, .08f, .48f);
         foreach (Renderer renderer in _placementPreview.GetComponentsInChildren<Renderer>())

@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   prefab: {fileID: 100004000001, guid: d4e5f647a8b9c0d1e2f3a4b5c6d7e8f9, type: 3}
   environment: 1
-  requiredZoneId: OilFields
+  requiredZoneId:
   resource: 2
   buildCost: 160
   workersRequired: 4

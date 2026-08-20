@@ -28,6 +28,8 @@ public class TowerLevel
     [Tooltip("Construction crew consumed when this level is purchased. Set 0 if this upgrade only costs money.")]
     [Min(0)] public int upgradeCrewRequired;
     public CrewRank minimumUpgradeCrewRank = CrewRank.Recruit;
+    [Tooltip("How many ships this tower can have alive at once while at this level. Scuttle one to free a slot for another.")]
+    [Min(1)] public int maxActiveShips = 3;
     public CarthaginianShipOption[] unlockedShips;
 }
 
