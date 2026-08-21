@@ -15,7 +15,7 @@ MonoBehaviour:
   shipName: Siege Quinquereme
   shipDescription: A massive Roman flagship equipped with siege weapons that bombard
     the harbor from afar.
-  mesh: {fileID: 0}
+  modelPrefab: {fileID: 2055460110897691268, guid: fbb85d8d5ca2c9145950ae9289010ec5, type: 3}
   combatClass: 1
   crewSize: 60
   bounty: 35
@@ -27,5 +27,7 @@ MonoBehaviour:
   longRangeAttackChance: 0.8
   attackCooldown: 1.5
   speed: 2.4
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 8564918643919068991, guid: 2954b864a09b8694c8f3dd434353712e, type: 3}
+  separationRadius: 6.5
+  separationStrength: 1.5
   showHealthBar: 1

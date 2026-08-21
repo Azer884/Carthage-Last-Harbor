@@ -30,6 +30,9 @@ public class CarthaginianBuildMenu : MonoBehaviour
     [SerializeField] private Color attackColor = CarthageTheme.CategoryAttack;
     [SerializeField] private Color defenseColor = CarthageTheme.CategoryDefense;
     [SerializeField] private Color resourceColor = CarthageTheme.CategoryResource;
+    [Tooltip("Build-button icon rect, as anchor fractions of the button (0,0 = bottom-left, 1,1 = top-right). Leaves room below for the label.")]
+    [SerializeField] private Vector2 iconAnchorMin = new Vector2(.04f, .30f);
+    [SerializeField] private Vector2 iconAnchorMax = new Vector2(.96f, .97f);
 
     private TextMeshProUGUI _moneyText;
     private TextMeshProUGUI _crewText;
@@ -238,17 +241,26 @@ public class CarthaginianBuildMenu : MonoBehaviour
         overlay.anchorMin = Vector2.zero; overlay.anchorMax = Vector2.one; overlay.offsetMin = overlay.offsetMax = Vector2.zero;
         _pausePanel = overlay.gameObject;
 
+        // Taller than a bare Resume/Restart dialog to leave room for the two volume sliders below the title.
         RectTransform dialog = CarthageTheme.CreateFramedPanel("Pause Dialog", overlay, CarthageTheme.Panel, 4f);
-        dialog.anchorMin = new Vector2(.36f, .3f); dialog.anchorMax = new Vector2(.64f, .62f);
+        dialog.anchorMin = new Vector2(.32f, .14f); dialog.anchorMax = new Vector2(.68f, .70f);
         dialog.offsetMin = dialog.offsetMax = Vector2.zero;
 
-        TextMeshProUGUI paused = CreateText("PAUSED", dialog, 48, TextAnchor.MiddleCenter, new Vector2(.1f, .68f), new Vector2(.9f, .92f));
+        TextMeshProUGUI paused = CreateText("PAUSED", dialog, 48, TextAnchor.MiddleCenter, new Vector2(.1f, .88f), new Vector2(.9f, .98f));
         paused.color = CarthageTheme.Gold;
         paused.fontStyle = FontStyles.Bold;
 
+        CreateVolumeRow(dialog, "Music Volume", .77f, .86f, .69f, .76f,
+            MusicManager.Instance != null ? MusicManager.Instance.Volume : .5f,
+            v => { if (MusicManager.Instance != null) MusicManager.Instance.Volume = v; });
+
+        CreateVolumeRow(dialog, "SFX Volume", .56f, .65f, .48f, .55f,
+            SfxManager.Instance != null ? SfxManager.Instance.Volume : .85f,
+            v => { if (SfxManager.Instance != null) SfxManager.Instance.Volume = v; });
+
         Button resume = CreateButton(dialog, "Resume Button", null, 0, 1);
         RectTransform resumeRect = resume.GetComponent<RectTransform>();
-        resumeRect.anchorMin = new Vector2(.15f, .38f); resumeRect.anchorMax = new Vector2(.85f, .58f);
+        resumeRect.anchorMin = new Vector2(.15f, .27f); resumeRect.anchorMax = new Vector2(.85f, .42f);
         resumeRect.offsetMin = resumeRect.offsetMax = Vector2.zero;
         CenterButtonLabel(resume);
         resume.GetComponentInChildren<TextMeshProUGUI>().text = "RESUME";
@@ -256,7 +268,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
         Button restart = CreateButton(dialog, "Restart Button", null, 0, 1);
         RectTransform restartRect = restart.GetComponent<RectTransform>();
-        restartRect.anchorMin = new Vector2(.15f, .12f); restartRect.anchorMax = new Vector2(.85f, .32f);
+        restartRect.anchorMin = new Vector2(.15f, .08f); restartRect.anchorMax = new Vector2(.85f, .23f);
         restartRect.offsetMin = restartRect.offsetMax = Vector2.zero;
         CenterButtonLabel(restart);
         restart.GetComponent<Image>().color = CarthageTheme.ButtonNegative;
@@ -265,10 +277,43 @@ public class CarthaginianBuildMenu : MonoBehaviour
         {
             SfxManager.Instance?.PlayButtonClick();
             Time.timeScale = 1f;
+            // MusicManager survives the reload (DontDestroyOnLoad) — clear the muffle so it doesn't carry
+            // into the fresh scene, since _isPaused never gets a chance to flip back to false here.
+            MusicManager.Instance?.SetMuffled(false);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         });
 
         _pausePanel.SetActive(false);
+    }
+
+    // A labeled slider row, anchored as two stacked fractions of the dialog: the label above the track.
+    private void CreateVolumeRow(RectTransform dialog, string label, float labelMinY, float labelMaxY, float sliderMinY, float sliderMaxY, float initialValue, Action<float> onChanged)
+    {
+        TextMeshProUGUI labelText = CreateText(label, dialog, 20, TextAnchor.MiddleLeft, new Vector2(.08f, labelMinY), new Vector2(.92f, labelMaxY));
+        labelText.color = CarthageTheme.Cream;
+
+        GameObject sliderGO = DefaultControls.CreateSlider(new DefaultControls.Resources());
+        sliderGO.name = label + " Slider";
+        sliderGO.transform.SetParent(dialog, false);
+        RectTransform sliderRect = (RectTransform)sliderGO.transform;
+        sliderRect.anchorMin = new Vector2(.08f, sliderMinY); sliderRect.anchorMax = new Vector2(.92f, sliderMaxY);
+        sliderRect.offsetMin = sliderRect.offsetMax = Vector2.zero;
+
+        sliderGO.transform.Find("Background").GetComponent<Image>().color = new Color(0f, 0f, 0f, .45f);
+        sliderGO.transform.Find("Fill Area/Fill").GetComponent<Image>().color = CarthageTheme.Gold;
+        sliderGO.transform.Find("Handle Slide Area/Handle").GetComponent<Image>().color = CarthageTheme.Cream;
+
+        Slider slider = sliderGO.GetComponent<Slider>();
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.value = initialValue;
+        ColorBlock colors = slider.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1f, 1f, 1f, .9f);
+        colors.pressedColor = new Color(.8f, .8f, .8f);
+        slider.colors = colors;
+        slider.onValueChanged.AddListener(v => onChanged(v));
     }
 
     private void TogglePause()
@@ -276,6 +321,10 @@ public class CarthaginianBuildMenu : MonoBehaviour
         _isPaused = !_isPaused;
         Time.timeScale = _isPaused ? 0f : _activeTimeScale;
         if (_pausePanel != null) _pausePanel.SetActive(_isPaused);
+        MusicManager.Instance?.SetMuffled(_isPaused);
+        // Volume changes are written to PlayerPrefs immediately but only flushed to disk here, same as the
+        // main menu's settings panel does on close.
+        if (!_isPaused) PlayerPrefs.Save();
     }
 
     private void HandlePauseInput()
@@ -602,7 +651,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         {
             GameObject iconObject = new GameObject("Icon", typeof(Image)); iconObject.transform.SetParent(buttonObject.transform, false);
             Image iconImage = iconObject.GetComponent<Image>(); iconImage.sprite = icon; iconImage.preserveAspect = true;
-            RectTransform iconRect = iconObject.GetComponent<RectTransform>(); iconRect.anchorMin = new Vector2(.12f, .29f); iconRect.anchorMax = new Vector2(.88f, .95f); iconRect.offsetMin = iconRect.offsetMax = Vector2.zero;
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>(); iconRect.anchorMin = iconAnchorMin; iconRect.anchorMax = iconAnchorMax; iconRect.offsetMin = iconRect.offsetMax = Vector2.zero;
         }
         CreateText(label, buttonObject.GetComponent<RectTransform>(), 15, TextAnchor.LowerCenter, new Vector2(.04f, .03f), new Vector2(.96f, .31f));
         return button;
@@ -778,7 +827,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
             + "\n\nBuild cost: " + definition.buildCost + " coin"
             + "\nPlacement: " + definition.environment + (string.IsNullOrEmpty(definition.requiredZoneId) ? string.Empty : " — " + definition.requiredZoneId)
             + "\nWorkers: " + definition.workersRequired
-            + "\nIncome: " + definition.unitsPerCycle + " " + definition.resource + " / " + definition.productionCycleSeconds + " sec";
+            + "\nIncome: " + definition.IncomePerSecond.ToString("0.0") + " TND/sec";
     }
 
     private void AddTooltip(GameObject target, string text) => AddTooltip(target, () => text);

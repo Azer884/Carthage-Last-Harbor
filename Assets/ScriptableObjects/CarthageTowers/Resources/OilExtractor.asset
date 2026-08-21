@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarthaginianResourceDefinition
   buildingName: Oil Extractor
   description: 
+  icon: {fileID: 21300000, guid: 289d2cc8094cedb44a9ed1d143a40c19, type: 3}
   prefab: {fileID: 100004000001, guid: d4e5f647a8b9c0d1e2f3a4b5c6d7e8f9, type: 3}
   environment: 1
-  requiredZoneId:
+  requiredZoneId: 
   resource: 2
   buildCost: 160
   workersRequired: 4

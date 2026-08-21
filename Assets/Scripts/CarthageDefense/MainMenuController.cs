@@ -9,9 +9,6 @@ using UnityEngine.UI;
 /// menu can be freely restyled in the Inspector without touching this script.</summary>
 public class MainMenuController : MonoBehaviour
 {
-    private const string MusicVolumeKey = "CarthageDefense.MusicVolume";
-    private const string SfxVolumeKey = "CarthageDefense.SfxVolume";
-
     [SerializeField] private string gameSceneName = "GameScene";
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private GameObject creditsPanel;
@@ -29,9 +26,11 @@ public class MainMenuController : MonoBehaviour
     private void Awake()
     {
         // MainMenu is the first scene loaded, so the audio singletons don't exist yet anywhere else —
-        // spin them up here (DontDestroyOnLoad carries them into GameScene afterward).
-        SfxManager.Ensure();
-        MusicManager.Ensure().PlayMenuMusic();
+        // spin them up here (DontDestroyOnLoad carries them into GameScene afterward). Ensure() already
+        // reads back the saved volume from PlayerPrefs, so the sliders just mirror it.
+        MusicManager music = MusicManager.Ensure();
+        SfxManager sfx = SfxManager.Ensure();
+        music.PlayMenuMusic();
 
         if (playButton != null) playButton.onClick.AddListener(PlayGame);
         if (settingsButton != null) settingsButton.onClick.AddListener(OpenSettings);
@@ -40,17 +39,15 @@ public class MainMenuController : MonoBehaviour
         if (creditsBackButton != null) creditsBackButton.onClick.AddListener(CloseCredits);
         if (quitButton != null) quitButton.onClick.AddListener(QuitGame);
 
-        // Read back whatever was saved last time; falls back to whatever the slider was left at in the
-        // Editor (its designed-in default) the very first time the menu ever runs.
         if (musicSlider != null)
         {
-            musicSlider.value = PlayerPrefs.GetFloat(MusicVolumeKey, musicSlider.value);
-            musicSlider.onValueChanged.AddListener(v => PlayerPrefs.SetFloat(MusicVolumeKey, v));
+            musicSlider.value = music.Volume;
+            musicSlider.onValueChanged.AddListener(v => music.Volume = v);
         }
         if (sfxSlider != null)
         {
-            sfxSlider.value = PlayerPrefs.GetFloat(SfxVolumeKey, sfxSlider.value);
-            sfxSlider.onValueChanged.AddListener(v => PlayerPrefs.SetFloat(SfxVolumeKey, v));
+            sfxSlider.value = sfx.Volume;
+            sfxSlider.onValueChanged.AddListener(v => sfx.Volume = v);
         }
 
         if (settingsPanel != null) settingsPanel.SetActive(false);

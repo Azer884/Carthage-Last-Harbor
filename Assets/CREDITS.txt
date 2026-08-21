@@ -12,14 +12,15 @@ Unity
 "Low-poly Mine" (https://skfb.ly/oy8Yx) by Sponk is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 "Extractor" (https://skfb.ly/oy9xM) by fangzhangmnm is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 "Oil Pumpjack - Animated" (https://skfb.ly/pFSzX) by Felnev is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Egyptian Ship" (https://skfb.ly/onUCB) by Kelisei Ventura is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Dromon medieval ship" (https://skfb.ly/opZP6) by Mitro123 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Ship G" (https://skfb.ly/oGHWx) by gogiart is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Ship H" (https://skfb.ly/oGNMC) by gogiart is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Gislinge Viking Boat" (https://skfb.ly/6VWyz) by Opus Poly is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Ship 07" (https://skfb.ly/ozzu8) by gogiart is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Ship B" (https://skfb.ly/oGvN7) by gogiart is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+"Ship VV" (https://skfb.ly/oNUPB) by gogiart is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
-MUSIC
-(add tracks below as you source them)
-"Track Name" - Composer / Source - License
-
-SOUND EFFECTS
-(add sound effects below as you source them)
-"Effect Name" - Source - License
 
 SPECIAL THANKS
 Lil Weiß

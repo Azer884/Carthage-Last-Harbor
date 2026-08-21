@@ -6,12 +6,15 @@ public class RomanShip : MonoBehaviour
 {
     public RomeShip shipData;
 
+    // Fallback only — ships are built fresh via AddComponent now (no per-type prefab to tune these on
+    // individually), so AssignShip() overwrites both from shipData.separationRadius/separationStrength
+    // right after this component is added. Per-ship-type tuning lives on the RomeShip asset instead.
     [Header("Separation")]
     [SerializeField, Min(0f)] private float separationRadius = 3.5f;
     [SerializeField, Min(0f)] private float separationStrength = 1.5f;
 
-    private Mesh _mesh;
     private float _speed;
+    private Animator _animator;
 
     private SplineAnimate _splineAnimate;
     private SplineContainer _pathContainer;
@@ -37,6 +40,9 @@ public class RomanShip : MonoBehaviour
 
     private void Awake()
     {
+        // SplineAnimate drives this ship's own transform along the path, so it belongs on this root
+        // regardless of whichever visual prefab got instantiated as its child.
+        if (GetComponent<SplineAnimate>() == null) gameObject.AddComponent<SplineAnimate>();
         if (shipData != null)
         {
             AssignShip(shipData);
@@ -59,8 +65,10 @@ public class RomanShip : MonoBehaviour
         }
 
         shipData = ship;
-        _mesh = ship.mesh;
         _speed = ship.speed;
+        separationRadius = ship.separationRadius;
+        separationStrength = ship.separationStrength;
+        SpawnVisual(ship.modelPrefab);
         _useLongRangeAttack = ship.hasLongRangeAttack && Random.value <= ship.longRangeAttackChance;
 
         _splineAnimate = GetComponent<SplineAnimate>();
@@ -70,6 +78,10 @@ public class RomanShip : MonoBehaviour
             return;
         }
 
+        // MaxSpeed's setter is a no-op unless AnimationMethod is already Speed (it otherwise just recomputes
+        // Duration from the Time-based default) — without this line every ship silently moved at whatever
+        // the default Duration timing was, regardless of its own configured speed.
+        _splineAnimate.AnimationMethod = SplineAnimate.Method.Speed;
         _splineAnimate.MaxSpeed = _speed;
         // Must be Once (not the default Loop) so Completed actually fires — that's how this ship knows
         // it has reached the heart and should start attacking, rather than sailing straight through it.
@@ -91,15 +103,44 @@ public class RomanShip : MonoBehaviour
             _splineAnimate.Container = _pathContainer;
             _splineAnimate.Play();
         }
+    }
 
-        if (_mesh == null)
-            return;
-        // Apply the mesh to the MeshFilter component
-        MeshFilter meshFilter = GetComponent<MeshFilter>();
-        if (meshFilter != null)
+    // The model prefab is purely a mesh/rig + its own Animator — no gameplay scripts belong on it, so it
+    // just gets parented under this root rather than merged component-by-component onto it.
+    private void SpawnVisual(GameObject modelPrefab)
+    {
+        if (modelPrefab == null) return;
+        GameObject model = Instantiate(modelPrefab, transform);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
+        _animator = model.GetComponentInChildren<Animator>();
+        ApplyEnemyOutline(model);
+    }
+
+    // Always-on red outline so a Roman ship reads as hostile at a glance, distinct from Carthaginian ships
+    // (which only outline gold on hover/select via TowerSelectionManager). Applied per-renderer here at
+    // spawn time rather than baked into each model prefab, so it automatically covers every piece of a
+    // multi-part rig regardless of which model a ship type happens to point at.
+    private static void ApplyEnemyOutline(GameObject model)
+    {
+        foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>())
         {
-            meshFilter.mesh = _mesh;
+            Outline outline = renderer.GetComponent<Outline>();
+            if (outline == null) outline = renderer.gameObject.AddComponent<Outline>();
+            outline.OutlineMode = Outline.Mode.OutlineAll;
+            outline.OutlineColor = new Color(1f, .15f, .1f);
+            outline.OutlineWidth = 4f;
+            outline.enabled = true;
         }
+    }
+
+    // Restarts the clip from the top on every shot rather than using a trigger parameter, so ship model
+    // prefabs only need a state literally named "Attack" — no AnimatorController parameters to wire up.
+    private void PlayAttackAnimation()
+    {
+        if (_animator == null) return;
+        int hash = Animator.StringToHash("Attack");
+        if (_animator.HasState(0, hash)) _animator.Play(hash, 0, 0f);
     }
 
     public void SetCombatDecision(bool canLeaveSpline, bool preferTowers)
@@ -247,6 +288,7 @@ public class RomanShip : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * 1.5f;
         CombatFx.PlayImpactSpark(origin);
         SfxManager.Instance?.PlayShipAttack();
+        PlayAttackAnimation();
 
         if (shipData.projectilePrefab == null)
         {

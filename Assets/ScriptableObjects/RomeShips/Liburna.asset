@@ -15,7 +15,7 @@ MonoBehaviour:
   shipName: Liburna
   shipDescription: A light Roman scout vessel. Fast and inexpensive, it forms the
     backbone of early invasions.
-  mesh: {fileID: 0}
+  modelPrefab: {fileID: 2928726004249054734, guid: 2e56dd61ba029f149ae705646d95bf90, type: 3}
   combatClass: 0
   crewSize: 20
   bounty: 10
@@ -27,3 +27,7 @@ MonoBehaviour:
   longRangeAttackChance: 0.5
   attackCooldown: 1
   speed: 5.5
+  projectilePrefab: {fileID: 8564918643919068991, guid: 2954b864a09b8694c8f3dd434353712e, type: 3}
+  separationRadius: 3.5
+  separationStrength: 1.5
+  showHealthBar: 0

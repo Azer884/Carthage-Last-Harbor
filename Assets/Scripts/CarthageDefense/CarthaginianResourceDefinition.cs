@@ -19,4 +19,8 @@ public class CarthaginianResourceDefinition : ScriptableObject
     [Min(1)] public int unitsPerCycle = 2;
     [Min(0.1f)] public float productionCycleSeconds = 10f;
     [Min(1)] public int sellValuePerUnit = 3;
+
+    // What players actually spend/earn in — raw resource units/sec (salt, iron, oil...) means nothing to
+    // them at a glance, but TND/sec is directly comparable to build cost and every other coin figure in the UI.
+    public float IncomePerSecond => productionCycleSeconds > 0f ? unitsPerCycle * sellValuePerUnit / productionCycleSeconds : 0f;
 }

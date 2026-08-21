@@ -264,9 +264,18 @@ public class Outline : MonoBehaviour {
       return;
     }
 
-    // Append combined submesh
-    mesh.subMeshCount++;
-    mesh.SetTriangles(mesh.triangles, mesh.subMeshCount - 1);
+    // Append combined submesh. mesh.triangles only returns submesh 0 once a mesh has more than one
+    // submesh, so building the combined submesh from it (the stock implementation) silently dropped
+    // every other submesh's geometry from the outline mask/fill — invisible or partial outlines on
+    // any multi-material mesh (e.g. the Silver Mine, 4 materials). Gather every submesh explicitly.
+    int originalSubMeshCount = mesh.subMeshCount;
+    var combinedTriangles = new List<int>();
+    for (int i = 0; i < originalSubMeshCount; i++) {
+      combinedTriangles.AddRange(mesh.GetTriangles(i));
+    }
+
+    mesh.subMeshCount = originalSubMeshCount + 1;
+    mesh.SetTriangles(combinedTriangles, originalSubMeshCount);
   }
 
   void UpdateMaterialProperties() {

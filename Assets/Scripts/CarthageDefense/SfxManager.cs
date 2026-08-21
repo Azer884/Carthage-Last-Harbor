@@ -7,6 +7,18 @@ public class SfxManager : MonoBehaviour
     public static SfxManager Instance { get; private set; }
     private const string SfxVolumeKey = "CarthageDefense.SfxVolume";
 
+    // Live-adjustable from any settings panel (main menu or in-game pause) — future PlayOneShot calls
+    // pick it up immediately instead of only taking effect on the next scene load.
+    public float Volume
+    {
+        get => volume;
+        set
+        {
+            volume = Mathf.Clamp01(value);
+            PlayerPrefs.SetFloat(SfxVolumeKey, volume);
+        }
+    }
+
     [Header("Building")]
     [SerializeField] private AudioClip towerPlaced;
     [SerializeField] private AudioClip placementInvalid;

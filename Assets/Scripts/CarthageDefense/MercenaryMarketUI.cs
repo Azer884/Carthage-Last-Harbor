@@ -108,6 +108,7 @@ public class MercenaryMarketUI : MonoBehaviour
         int quantity = ParseQuantity(_rows[index].quantity.text, market.Offers[index].currentStock);
         if (market.CanBuy(index, quantity)) market.Buy(index, quantity);
         else if (market.CanRent(index, quantity)) market.Rent(index, quantity);
+        else if (CartageHeart.Instance != null) ErrorFeedback.Show(CartageHeart.Instance.transform.position, market.IsLocked ? "Market closed" : "Not enough coin");
         Refresh();
     }
 

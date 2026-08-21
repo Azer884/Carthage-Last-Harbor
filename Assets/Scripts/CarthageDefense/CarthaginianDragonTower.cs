@@ -13,6 +13,8 @@ public class CarthaginianDragonTower : MonoBehaviour
     [Tooltip("Local-space offset (relative to the StationaryTowerPlace slot's own position/rotation) applied when DragonTowerPlacementController places this prefab, so the model can be nudged onto its exact spot on the slot.")]
     [SerializeField] private Vector3 placementOffset;
     [SerializeField] private DragonTowerLevel[] levels;
+    [Tooltip("Shrinks the auto-fitted selection hitbox's footprint (X/Z only — height is kept full). The raw model bounds (wings, raised head) are wide enough to block clicks on neighboring StationaryTowerPlace slots and to swallow empty-space deselect clicks near the dragon.")]
+    [SerializeField, Range(.1f, 1f)] private float footprintScale = .5f;
     private int _activeLevel;
     private RomanShipHealth _target;
     private float _nextAttackTime;
@@ -32,6 +34,10 @@ public class CarthaginianDragonTower : MonoBehaviour
         // own Loop Time is off, so without this it plays once and freezes on the last pose instead of
         // continuously animating.
         _animator = GetComponentInChildren<Animator>();
+        // Awake runs before TowerSelectionManager.EnsureSelectableCollider's own (unscaled) call sites get
+        // a chance to add one — this narrower box wins since that method skips building a collider when
+        // one is already present.
+        TowerSelectionManager.EnsureSelectableCollider(gameObject, new Vector3(footprintScale, 1f, footprintScale));
     }
 
     private void Update()
@@ -96,7 +102,12 @@ public class CarthaginianDragonTower : MonoBehaviour
     private void Face(Vector3 targetPosition)
     {
         Vector3 direction = targetPosition - transform.position; direction.y = 0f;
-        if (direction.sqrMagnitude > 0.001f) transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(direction), 8f * Time.deltaTime);
+        if (direction.sqrMagnitude < 0.001f) return;
+        // The "Dragon" model child is baked with a 180-degree Y rotation relative to this root (part of
+        // how it was imported/rigged), so its visual front is the root's -Z, not +Z. Facing the root's back
+        // at the target — instead of the naive LookRotation(direction) — is what actually points the model
+        // at it.
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(-direction), 8f * Time.deltaTime);
     }
 }
 

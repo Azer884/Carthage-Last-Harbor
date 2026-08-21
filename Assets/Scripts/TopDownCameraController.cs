@@ -30,10 +30,14 @@ public class TopDownCameraController : MonoBehaviour
     private Vector2 _dragOrigin;
     private bool _hasLookTarget;
     private Vector3 _lookTarget;
+    private TowerPlacementController _placementController;
+    private DragonTowerPlacementController _dragonPlacementController;
 
     private void Awake()
     {
         _camera = GetComponent<Camera>();
+        _placementController = FindAnyObjectByType<TowerPlacementController>();
+        _dragonPlacementController = FindAnyObjectByType<DragonTowerPlacementController>();
     }
 
     private void Update()
@@ -56,10 +60,6 @@ public class TopDownCameraController : MonoBehaviour
         float scroll = Mouse.current.scroll.ReadValue().y;
         if (Mathf.Abs(scroll) > .01f) transform.position += transform.forward * (scroll * zoomSpeed * Time.deltaTime);
         ClampPosition();
-        if (lookAtMouse && _camera != null && Mouse.current.rightButton.wasPressedThisFrame)
-        {
-            _hasLookTarget = TryGetMouseLookTarget(out _lookTarget);
-        }
 
         Vector3 lookTarget = _hasLookTarget ? _lookTarget : focalCenter;
         Vector3 toTarget = lookTarget - transform.position;
@@ -68,6 +68,18 @@ public class TopDownCameraController : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnToCenterSpeed * Time.deltaTime);
         }
+    }
+
+    // Runs after every Update() this frame (LateUpdate is always last, regardless of script execution
+    // order), so the placement controllers' own Update() has already had the chance to consume this same
+    // right-click as a "cancel placement" — reading CancelledPlacementThisFrame here can't race that.
+    private void LateUpdate()
+    {
+        if (!lookAtMouse || _camera == null || Mouse.current == null || !Mouse.current.rightButton.wasPressedThisFrame) return;
+        bool cancelledPlacement = (_placementController != null && _placementController.CancelledPlacementThisFrame)
+            || (_dragonPlacementController != null && _dragonPlacementController.CancelledPlacementThisFrame);
+        if (cancelledPlacement) return;
+        _hasLookTarget = TryGetMouseLookTarget(out _lookTarget);
     }
 
     private bool TryGetMouseLookTarget(out Vector3 lookTarget)

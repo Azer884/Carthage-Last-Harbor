@@ -15,7 +15,7 @@ MonoBehaviour:
   towerName: Lighthouse of Baal Hammon
   description: A fortified beacon that calls Carthaginian warships from the harbor.
     Ship spawning is limited by available crew.
-  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: efb5986b401309f4c93380566e2c3eb3, type: 3}
   category: 0
   prefab: {fileID: 2407846119100007858, guid: f9da4eb3f116a0046adebf9a03119631, type: 3}
   buildCost: 50

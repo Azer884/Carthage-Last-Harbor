@@ -15,7 +15,7 @@ MonoBehaviour:
   shipName: Corvus Assault Ship
   shipDescription: Carries the famous boarding bridge. Tougher and capable of dealing
     heavy damage to harbor defenses.
-  mesh: {fileID: 0}
+  modelPrefab: {fileID: 3317175237950969481, guid: c847f57e5c23fa24bb63cb5d21326c7b, type: 3}
   combatClass: 2
   crewSize: 40
   bounty: 20
@@ -27,3 +27,7 @@ MonoBehaviour:
   longRangeAttackChance: 0.5
   attackCooldown: 1
   speed: 3.8
+  projectilePrefab: {fileID: 8564918643919068991, guid: 2954b864a09b8694c8f3dd434353712e, type: 3}
+  separationRadius: 3.5
+  separationStrength: 1.5
+  showHealthBar: 0

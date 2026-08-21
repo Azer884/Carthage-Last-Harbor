@@ -8,17 +8,36 @@ public class MusicManager : MonoBehaviour
     public static MusicManager Instance { get; private set; }
     private const string MusicVolumeKey = "CarthageDefense.MusicVolume";
 
+    // Live-adjustable from any settings panel (main menu or in-game pause) — updates the currently
+    // playing source immediately instead of only taking effect on the next scene load.
+    public float Volume
+    {
+        get => volume;
+        set
+        {
+            volume = Mathf.Clamp01(value);
+            if (_active != null) _active.volume = volume;
+            PlayerPrefs.SetFloat(MusicVolumeKey, volume);
+        }
+    }
+
     [SerializeField] private AudioClip menuMusic;
-    [SerializeField] private AudioClip buildMusic;
     [SerializeField] private AudioClip waveMusic;
     [SerializeField] private AudioClip gameOverMusic;
     [SerializeField, Range(0f, 1f)] private float volume = .5f;
     [SerializeField, Min(.1f)] private float crossfadeDuration = 1.5f;
+    [Header("Pause muffle")]
+    [SerializeField] private float pausedCutoffFrequency = 700f;
+    [SerializeField] private float cutoffLerpSpeed = 4f;
+
+    private const float UnfilteredCutoffFrequency = 22000f; // AudioLowPassFilter's own default — effectively no filtering.
 
     private AudioSource _sourceA;
     private AudioSource _sourceB;
     private AudioSource _active;
     private Coroutine _fadeRoutine;
+    private AudioLowPassFilter _lowPassFilter;
+    private float _targetCutoffFrequency = UnfilteredCutoffFrequency;
 
     public static MusicManager Ensure()
     {
@@ -38,13 +57,29 @@ public class MusicManager : MonoBehaviour
         _sourceA.loop = _sourceB.loop = true;
         _sourceA.playOnAwake = _sourceB.playOnAwake = false;
         _active = _sourceA;
+        // One filter on this GameObject affects both sources — Unity applies AudioLowPassFilter to every
+        // AudioSource attached to the same object.
+        _lowPassFilter = gameObject.AddComponent<AudioLowPassFilter>();
+        _lowPassFilter.cutoffFrequency = UnfilteredCutoffFrequency;
+    }
+
+    // Called by CarthaginianBuildMenu on pause/resume — muffles the music while paused rather than snapping
+    // the cutoff instantly, since Time.timeScale is 0 while paused so this has to run on unscaled time.
+    public void SetMuffled(bool muffled) => _targetCutoffFrequency = muffled ? pausedCutoffFrequency : UnfilteredCutoffFrequency;
+
+    private void Update()
+    {
+        if (_lowPassFilter == null) return;
+        _lowPassFilter.cutoffFrequency = Mathf.Lerp(_lowPassFilter.cutoffFrequency, _targetCutoffFrequency, Time.unscaledDeltaTime * cutoffLerpSpeed);
     }
 
     // No auto-played default track here: the singleton can now first spin up from either MainMenu or
     // GameScene (whichever loads first), so each scene's own controller explicitly requests its track
     // instead of this manager guessing which one it should be.
     public void PlayMenuMusic() => Crossfade(menuMusic);
-    public void PlayBuildMusic() => Crossfade(buildMusic);
+    // Build phase shares the menu track by design (same calm pre-wave mood) — Crossfade no-ops if it's
+    // already playing, so arriving from the main menu doesn't even trigger a fade.
+    public void PlayBuildMusic() => Crossfade(menuMusic);
     public void PlayWaveMusic() => Crossfade(waveMusic);
     public void PlayGameOverMusic() => Crossfade(gameOverMusic);
 

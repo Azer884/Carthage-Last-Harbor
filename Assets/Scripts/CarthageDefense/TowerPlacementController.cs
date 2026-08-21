@@ -17,6 +17,9 @@ public class TowerPlacementController : MonoBehaviour
     private GameObject _placementPreview;
     private MaterialPropertyBlock _previewProperties;
     public bool IsPlacing => _selectedTower != null || _selectedResourceTower != null;
+    // Read by TopDownCameraController (in LateUpdate, after this Update has run) so a right-click that
+    // cancels placement doesn't also spin the camera to look at that same click.
+    public bool CancelledPlacementThisFrame { get; private set; }
     public void SelectTower(CarthaginianTowerDefinition tower) { _selectedTower = tower; _selectedResourceTower = null; CreatePreview(tower != null ? tower.prefab : null); }
     public void SelectResourceTower(CarthaginianResourceDefinition tower) { _selectedResourceTower = tower; _selectedTower = null; CreatePreview(tower != null ? tower.prefab : null); }
     public void CancelPlacement() { _selectedTower = null; _selectedResourceTower = null; if (_placementPreview != null) Destroy(_placementPreview); _placementPreview = null; }
@@ -47,8 +50,9 @@ public class TowerPlacementController : MonoBehaviour
 
     private void Update()
     {
+        CancelledPlacementThisFrame = false;
         if (!IsPlacing || Mouse.current == null) return;
-        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); return; }
+        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); CancelledPlacementThisFrame = true; return; }
         Camera cam = placementCamera != null ? placementCamera : Camera.main;
         if (cam == null) return;
         LayerMask placementMask = _selectedResourceTower != null && _selectedResourceTower.environment == ResourceEnvironment.Land ? landMask : seaMask;

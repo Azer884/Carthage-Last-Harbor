@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7953d6cfeaaa2d547983b92c1a62cfac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
-  startingMoney: 250000
+  startingMoney: 150
 --- !u!4 &11434016
 Transform:
   m_ObjectHideFlags: 0
@@ -597,7 +597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CrewRoster
   startingCrew:
   - rank: 0
-    amount: 2000
+    amount: 24
     isMercenary: 0
 --- !u!4 &375140319
 Transform:
@@ -683,6 +683,7 @@ GameObject:
   - component: {fileID: 410087041}
   - component: {fileID: 410087040}
   - component: {fileID: 410087042}
+  - component: {fileID: 410087043}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -799,6 +800,271 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!114 &410087043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410087039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83fe1776d9a87c243b28d9b8de84ec79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DayNightCycle
+  sun: {fileID: 410087040}
+  dayLengthSeconds: 300
+  startTimeOfDay: 0.3
+  sunHeading: -30
+  sunColor:
+    serializedVersion: 2
+    key0: {r: 0.08, g: 0.1, b: 0.22, a: 1}
+    key1: {r: 0.95, g: 0.45, b: 0.25, a: 1}
+    key2: {r: 1, g: 0.95, b: 0.85, a: 0}
+    key3: {r: 1, g: 0.98, b: 0.92, a: 0}
+    key4: {r: 1, g: 0.95, b: 0.85, a: 0}
+    key5: {r: 0.95, g: 0.4, b: 0.25, a: 0}
+    key6: {r: 0.08, g: 0.1, b: 0.22, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 15073
+    ctime2: 20971
+    ctime3: 32768
+    ctime4: 44564
+    ctime5: 50462
+    ctime6: 65535
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 7
+    m_NumAlphaKeys: 2
+  sunIntensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.22
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.27
+      value: 0.6
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.35
+      value: 1.8
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 2
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.65
+      value: 1.8
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.73
+      value: 0.6
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.78
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  ambientColor:
+    serializedVersion: 2
+    key0: {r: 0.04, g: 0.05, b: 0.09, a: 1}
+    key1: {r: 0.35, g: 0.24, b: 0.22, a: 1}
+    key2: {r: 0.55, g: 0.58, b: 0.65, a: 0}
+    key3: {r: 0.35, g: 0.24, b: 0.22, a: 0}
+    key4: {r: 0.04, g: 0.05, b: 0.09, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 16384
+    ctime2: 32768
+    ctime3: 49151
+    ctime4: 65535
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 5
+    m_NumAlphaKeys: 2
+  ambientIntensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.25
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.75
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  skyExposure:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.25
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1.3
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.75
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &498177826 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6806754015510019261, guid: c8dba2db5e5363a4696b67ccbd3b7d76, type: 3}
@@ -2123,8 +2389,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 58.99083, y: 51.670067, z: 61.563553}
+  m_Center: {x: -10.412392, y: 25.335033, z: -12.366047}
 --- !u!4 &1103877274
 Transform:
   m_ObjectHideFlags: 0
@@ -2189,6 +2455,8 @@ MonoBehaviour:
   attackColor: {r: 0.54901963, g: 0.16470589, b: 0.11372549, a: 0.9490196}
   defenseColor: {r: 0.36078432, g: 0.2784314, b: 0.11764706, a: 0.9490196}
   resourceColor: {r: 0.2, g: 0.32156864, b: 0.15686275, a: 0.9490196}
+  iconAnchorMin: {x: 0, y: 0}
+  iconAnchorMax: {x: 1, y: 1}
 --- !u!4 &1110699413
 Transform:
   m_ObjectHideFlags: 0
@@ -2758,7 +3026,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c7963fc4076c444e9ab9fbb3b337fdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnManager
-  shipPrefab: {fileID: 5523474604332321846, guid: df199490b8204b448abbfaf6c452534b, type: 3}
   spawnPoint: {fileID: 730781651}
 --- !u!1 &1377787947 stripped
 GameObject:
@@ -2876,7 +3143,7 @@ MonoBehaviour:
       amount: 1
       spawnInterval: 2
       attackChancePercent: 70
-      towerAttackChancePercent: 50
+      towerAttackChancePercent: 10.4
   - waveName: Wave 4 - Roman Armada
     startDelay: 5
     ships:
@@ -2894,7 +3161,7 @@ MonoBehaviour:
       amount: 2
       spawnInterval: 2
       attackChancePercent: 75
-      towerAttackChancePercent: 55
+      towerAttackChancePercent: 15.1
   timeBetweenWaves: 4
   autoStartWaves: 1
   autoStartDelay: 35

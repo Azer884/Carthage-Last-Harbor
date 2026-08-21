@@ -472,12 +472,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72a2f0b21d4867e499f1f7353e580527, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
-  menuMusic: {fileID: 0}
-  buildMusic: {fileID: 0}
-  waveMusic: {fileID: 0}
-  gameOverMusic: {fileID: 0}
+  menuMusic: {fileID: 8300000, guid: 660dcd391f2cb9d40be6f12f18dc41dc, type: 3}
+  waveMusic: {fileID: 8300000, guid: 67fe7b10dabd026408b6e94a7cd25723, type: 3}
+  gameOverMusic: {fileID: 8300000, guid: 660dcd391f2cb9d40be6f12f18dc41dc, type: 3}
   volume: 0.5
-  crossfadeDuration: 1.5
+  crossfadeDuration: 3
+  pausedCutoffFrequency: 700
+  cutoffLerpSpeed: 4
 --- !u!4 &91155357
 Transform:
   m_ObjectHideFlags: 0
@@ -2169,17 +2170,17 @@ MonoBehaviour:
   shipSpawned: {fileID: 8300000, guid: 09798151320268d4588a9f3457d26726, type: 3}
   shipDestroyed: {fileID: 8300000, guid: ba042cda8f4850642b110dc31c8feaa2, type: 3}
   shipAttack: {fileID: 8300000, guid: 0e7645ba0e2f6e140ad81ce0efad478a, type: 3}
-  shipSailingLoop: {fileID: 0}
-  dragonAttack: {fileID: 0}
+  shipSailingLoop: {fileID: 8300000, guid: 7fd16e56351b55242891ff3c4815ff34, type: 3}
+  dragonAttack: {fileID: 8300000, guid: 5b1d2a9ed0a052a4986f0b89215b45df, type: 3}
   coinGained: {fileID: 8300000, guid: 536a5daa65794674c96974726abab354, type: 3}
   coinSpent: {fileID: 8300000, guid: b998abecd8ee77149be71f495f8cc588, type: 3}
-  crewTrained: {fileID: 0}
-  crewBought: {fileID: 0}
-  crewGenerated: {fileID: 0}
+  crewTrained: {fileID: 8300000, guid: 636b8f07fff61994dad85e0f04423877, type: 3}
+  crewBought: {fileID: 8300000, guid: ff84e4575b0d7b449a0797553e32fdc1, type: 3}
+  crewGenerated: {fileID: 8300000, guid: 75129963bb11ef541a6869d7ba217c2c, type: 3}
   waveStart: {fileID: 8300000, guid: e6a1c7d3f53674042a5747a3089370e4, type: 3}
   heartDestroyed: {fileID: 8300000, guid: 90ef5dd367a05ab489b23d3aaa247a0c, type: 3}
   buttonClick: {fileID: 8300000, guid: 74be30460940ba14eb30735c400b93c8, type: 3}
-  ambientLoop: {fileID: 0}
+  ambientLoop: {fileID: 8300000, guid: 36e3e5b15fc2e644b91c4b54c30c8313, type: 3}
   ambientVolume: 0.35
   volume: 0.85
   loopVolume: 0.5

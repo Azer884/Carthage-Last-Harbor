@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "Sacred fire-breathing dragon bound to its shrine. Cannot sail \u2014
     it only attacks Roman ships that come within range of the platform it is anchored
     to."
-  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: a11a7fcbc3466724e89b269e9fb11344, type: 3}
   category: 1
   prefab: {fileID: 8428152199459651597, guid: 86a9e6f13de4f294abd735a85863221e, type: 3}
   buildCost: 50
@@ -26,19 +26,23 @@ MonoBehaviour:
     upgradeCost: 200
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips: []
   - title: II
     upgradeCost: 400
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips: []
   - title: III
     upgradeCost: 700
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips: []
   - title: IV
     upgradeCost: 1100
     upgradeCrewRequired: 0
     minimumUpgradeCrewRank: 0
+    maxActiveShips: 3
     unlockedShips: []

@@ -56,7 +56,11 @@ public class TowerSelectionManager : MonoBehaviour
         SetAllSelectableOutlines(false);
     }
 
-    public static void EnsureSelectableCollider(GameObject building)
+    public static void EnsureSelectableCollider(GameObject building) => EnsureSelectableCollider(building, Vector3.one);
+
+    // sizeScale lets a caller shrink the auto-fitted box per-axis before it's applied — e.g. a model whose
+    // raw render bounds (wingspan, raised head) are much wider than its actual footprint.
+    public static void EnsureSelectableCollider(GameObject building, Vector3 sizeScale)
     {
         if (building == null || building.GetComponentInChildren<Collider>() != null) return;
         Renderer[] renderers = building.GetComponentsInChildren<Renderer>();
@@ -67,7 +71,8 @@ public class TowerSelectionManager : MonoBehaviour
         Vector3 localMin = building.transform.InverseTransformPoint(worldBounds.min);
         Vector3 localMax = building.transform.InverseTransformPoint(worldBounds.max);
         collider.center = (localMin + localMax) * .5f;
-        collider.size = new Vector3(Mathf.Abs(localMax.x - localMin.x), Mathf.Abs(localMax.y - localMin.y), Mathf.Abs(localMax.z - localMin.z));
+        Vector3 fullSize = new Vector3(Mathf.Abs(localMax.x - localMin.x), Mathf.Abs(localMax.y - localMin.y), Mathf.Abs(localMax.z - localMin.z));
+        collider.size = Vector3.Scale(fullSize, sizeScale);
     }
 
     // Ships are spawned at runtime, never hand-authored with an Outline like scene-placed towers, so give
@@ -123,7 +128,7 @@ public class TowerSelectionManager : MonoBehaviour
         // Active-only: towers built from per-level model children (Outline on each) only ever have one
         // level active at a time, so this only ever picks up whichever level is currently showing.
         _selectedOutlines = building.GetComponentsInChildren<Outline>();
-        foreach (Outline outline in _selectedOutlines) outline.enabled = true;
+        foreach (Outline outline in _selectedOutlines) if (outline != null) outline.enabled = true;
         if (TryGetRangeVisual(building, out float range, out Color rangeColor))
         {
             _selectedRing = building.GetComponent<SightRangeRing>();
@@ -137,7 +142,10 @@ public class TowerSelectionManager : MonoBehaviour
 
     public void Deselect()
     {
-        foreach (Outline outline in _selectedOutlines) outline.enabled = false;
+        // A selected object can be destroyed by something other than this manager — a ship sinking in
+        // combat, a tower sold via other code paths — without ever going through Deselect() first, leaving
+        // a stale reference here. Guard every touch of these cached arrays against that.
+        foreach (Outline outline in _selectedOutlines) if (outline != null) outline.enabled = false;
         if (_selectedRing != null) _selectedRing.Hide();
         if (_selected != null && _selected.GetComponent<CartageHeart>() != null) MercenaryMarketUI.Instance?.Hide();
         _selected = null; _selectedOutlines = System.Array.Empty<Outline>(); _selectedRing = null;
@@ -188,10 +196,10 @@ public class TowerSelectionManager : MonoBehaviour
         // Leave outlines the selection is still using alone — otherwise moving the mouse off a selected
         // building would turn its glow off even though it's still selected.
         foreach (Outline outline in _hoverOutlines)
-            if (System.Array.IndexOf(_selectedOutlines, outline) < 0) outline.enabled = false;
+            if (outline != null && System.Array.IndexOf(_selectedOutlines, outline) < 0) outline.enabled = false;
         _hoverTarget = building;
         _hoverOutlines = building != null ? building.GetComponentsInChildren<Outline>() : System.Array.Empty<Outline>();
-        foreach (Outline outline in _hoverOutlines) outline.enabled = true;
+        foreach (Outline outline in _hoverOutlines) if (outline != null) outline.enabled = true;
     }
 
     private void SetAllSelectableOutlines(bool enabled)
@@ -481,7 +489,7 @@ public class TowerSelectionManager : MonoBehaviour
         _title.text = resourceDefinition != null ? resourceDefinition.buildingName : _selected.name;
         _details.text = (resourceDefinition != null ? resourceDefinition.description : string.Empty)
             + "\n\nWorkers: " + (resourceDefinition != null ? resourceDefinition.workersRequired : 0)
-            + "\nIncome: " + (resourceDefinition != null ? resourceDefinition.unitsPerCycle + " " + resourceDefinition.resource + " / " + resourceDefinition.productionCycleSeconds + " sec" : "")
+            + "\nIncome: " + (resourceDefinition != null ? resourceDefinition.IncomePerSecond.ToString("0.0") + " TND/sec" : "")
             + "\nSell value: " + GetSellValue() + " coin";
         SetActiveSafe(_upgrade.gameObject, false);
         _upgradeHint.text = string.Empty;
@@ -537,7 +545,12 @@ public class TowerSelectionManager : MonoBehaviour
         SfxManager.Instance?.PlayButtonClick();
         if (_selected == null) return;
         CarthaginianTower tower = _selected.GetComponent<CarthaginianTower>();
-        if (tower != null && tower.TryUpgrade()) RefreshSelectedOutlines();
+        if (tower == null) return;
+        if (tower.TryUpgrade()) { RefreshSelectedOutlines(); return; }
+        // Normally caught by the button's own interactable state, but crew/money can shift between
+        // frames (e.g. a ship finishing a spawn cycle) — this is the fallback for that edge case.
+        int money = EconomyManager.Instance != null ? EconomyManager.Instance.Money : 0;
+        ErrorFeedback.Show(_selected.transform.position, money < tower.NextUpgradeCost ? "Not enough coin" : "Not enough crew");
     }
 
     // Upgrading swaps which level's model is active (a different per-level child, or — for Sidi Bou Said —
@@ -546,9 +559,9 @@ public class TowerSelectionManager : MonoBehaviour
     // the old level's (now inactive) outlines are the only ones still tracked as "on".
     private void RefreshSelectedOutlines()
     {
-        foreach (Outline outline in _selectedOutlines) outline.enabled = false;
+        foreach (Outline outline in _selectedOutlines) if (outline != null) outline.enabled = false;
         _selectedOutlines = _selected != null ? _selected.GetComponentsInChildren<Outline>() : System.Array.Empty<Outline>();
-        foreach (Outline outline in _selectedOutlines) outline.enabled = true;
+        foreach (Outline outline in _selectedOutlines) if (outline != null) outline.enabled = true;
     }
     private void TrainSelected(CrewRank rank, int inputIndex)
     {
