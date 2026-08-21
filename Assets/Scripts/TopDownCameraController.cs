@@ -1,15 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>New Input System camera for a top-down tower defense: WASD/arrow pan, wheel zoom, middle-mouse drag, and mouse-facing rotation.</summary>
+/// <summary>Top-down tower defense camera for the New Input System: WASD/arrow pan, wheel zoom, middle-mouse
+/// drag. Rotation is whatever angle the camera is set to in the scene — nothing here ever changes it, so
+/// panning always moves the same screen-relative direction no matter where you are on the map.</summary>
 [RequireComponent(typeof(Camera))]
 public class TopDownCameraController : MonoBehaviour
 {
     [Header("Pan")]
     [SerializeField, Min(.1f)] private float panSpeed = 9f;
     [SerializeField, Min(0f)] private float dragSpeed = .015f;
-    [SerializeField, Min(0f)] private float turnToCenterSpeed = 2.5f;
-    [SerializeField] private Vector3 focalCenter = Vector3.zero;
     [Header("Zoom")]
     [SerializeField, Min(.1f)] private float zoomSpeed = 7f;
     [SerializeField, Min(1f)] private float minimumHeight = 12f;
@@ -21,24 +21,8 @@ public class TopDownCameraController : MonoBehaviour
     public bool UsesMapBounds => useMapBounds;
     public Vector2 MinimumMapPosition => minimumMapPosition;
     public Vector2 MaximumMapPosition => maximumMapPosition;
-    [Header("Mouse Look")]
-    [SerializeField] private bool lookAtMouse = true;
-    [SerializeField, Min(-1000f)] private float mouseLookPlaneY;
-    [SerializeField, Min(.1f)] private Vector2 mouseLookAreaSize = new Vector2(10f, 10f);
 
-    private Camera _camera;
     private Vector2 _dragOrigin;
-    private bool _hasLookTarget;
-    private Vector3 _lookTarget;
-    private TowerPlacementController _placementController;
-    private DragonTowerPlacementController _dragonPlacementController;
-
-    private void Awake()
-    {
-        _camera = GetComponent<Camera>();
-        _placementController = FindAnyObjectByType<TowerPlacementController>();
-        _dragonPlacementController = FindAnyObjectByType<DragonTowerPlacementController>();
-    }
 
     private void Update()
     {
@@ -60,53 +44,6 @@ public class TopDownCameraController : MonoBehaviour
         float scroll = Mouse.current.scroll.ReadValue().y;
         if (Mathf.Abs(scroll) > .01f) transform.position += transform.forward * (scroll * zoomSpeed * Time.deltaTime);
         ClampPosition();
-
-        Vector3 lookTarget = _hasLookTarget ? _lookTarget : focalCenter;
-        Vector3 toTarget = lookTarget - transform.position;
-        if (toTarget.sqrMagnitude > .01f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnToCenterSpeed * Time.deltaTime);
-        }
-    }
-
-    // Runs after every Update() this frame (LateUpdate is always last, regardless of script execution
-    // order), so the placement controllers' own Update() has already had the chance to consume this same
-    // right-click as a "cancel placement" — reading CancelledPlacementThisFrame here can't race that.
-    private void LateUpdate()
-    {
-        if (!lookAtMouse || _camera == null || Mouse.current == null || !Mouse.current.rightButton.wasPressedThisFrame) return;
-        bool cancelledPlacement = (_placementController != null && _placementController.CancelledPlacementThisFrame)
-            || (_dragonPlacementController != null && _dragonPlacementController.CancelledPlacementThisFrame);
-        if (cancelledPlacement) return;
-        _hasLookTarget = TryGetMouseLookTarget(out _lookTarget);
-    }
-
-    private bool TryGetMouseLookTarget(out Vector3 lookTarget)
-    {
-        lookTarget = focalCenter;
-
-        if (Mouse.current == null)
-        {
-            return false;
-        }
-
-        Ray ray = _camera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        Plane plane = new Plane(Vector3.up, new Vector3(0f, mouseLookPlaneY, 0f));
-        if (!plane.Raycast(ray, out float distance))
-        {
-            return false;
-        }
-
-        Vector3 hitPoint = ray.GetPoint(distance);
-        Vector3 center = new Vector3(focalCenter.x, mouseLookPlaneY, focalCenter.z);
-        float halfWidth = mouseLookAreaSize.x * .5f;
-        float halfHeight = mouseLookAreaSize.y * .5f;
-        lookTarget = new Vector3(
-            Mathf.Clamp(hitPoint.x, center.x - halfWidth, center.x + halfWidth),
-            mouseLookPlaneY,
-            Mathf.Clamp(hitPoint.z, center.z - halfHeight, center.z + halfHeight));
-        return true;
     }
 
     private Vector2 GetKeyboardMotion()

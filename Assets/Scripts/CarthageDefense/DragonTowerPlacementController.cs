@@ -17,9 +17,6 @@ public class DragonTowerPlacementController : MonoBehaviour
     private GameObject _preview;
     private MaterialPropertyBlock _previewProperties;
     public bool IsPlacing => _selectedDragon != null;
-    // Read by TopDownCameraController (in LateUpdate, after this Update has run) so a right-click that
-    // cancels placement doesn't also spin the camera to look at that same click.
-    public bool CancelledPlacementThisFrame { get; private set; }
 
     private void Awake()
     {
@@ -44,9 +41,8 @@ public class DragonTowerPlacementController : MonoBehaviour
 
     private void Update()
     {
-        CancelledPlacementThisFrame = false;
         if (!IsPlacing || Mouse.current == null) return;
-        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); CancelledPlacementThisFrame = true; return; }
+        if (Mouse.current.rightButton.wasPressedThisFrame) { SfxManager.Instance?.PlayButtonClick(); CancelPlacement(); return; }
         Camera cam = placementCamera != null ? placementCamera : Camera.main;
         if (cam == null) { SetPreviewVisible(false); return; }
         GameObject slot = FindSlotUnderPointer(cam, Mouse.current.position.ReadValue());

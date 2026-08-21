@@ -539,17 +539,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TopDownCameraController
   panSpeed: 28
   dragSpeed: 0.035
-  turnToCenterSpeed: 1.5
-  focalCenter: {x: 0, y: 0, z: -28}
-  zoomSpeed: 3
+  zoomSpeed: 10
   minimumHeight: 12
   maximumHeight: 141
   useMapBounds: 1
   minimumMapPosition: {x: -55, y: -55}
   maximumMapPosition: {x: 55, y: 55}
-  lookAtMouse: 1
-  mouseLookPlaneY: 0
-  mouseLookAreaSize: {x: 30, y: 30}
 --- !u!114 &330585549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2338,7 +2333,7 @@ MonoBehaviour:
   - title: Level I
     recruitInterval: 10
     recruitsPerArrival: 3
-    failedFighterWorkerChance: 0.3
+    failedFighterWorkerChance: 0.5
     model: {fileID: 1797943260}
   - title: Level II
     recruitInterval: 8
@@ -2348,12 +2343,12 @@ MonoBehaviour:
   - title: Level III
     recruitInterval: 6
     recruitsPerArrival: 4
-    failedFighterWorkerChance: 0.2
+    failedFighterWorkerChance: 0.3
     model: {fileID: 1183152451}
   - title: Level IV
     recruitInterval: 4
     recruitsPerArrival: 5
-    failedFighterWorkerChance: 0.15
+    failedFighterWorkerChance: 0.2
     model: {fileID: 606199126}
 --- !u!114 &1103877272
 MonoBehaviour:
@@ -2443,14 +2438,14 @@ MonoBehaviour:
   dragonPlacementController: {fileID: 890684693}
   attackTowers:
   - {fileID: 11400000, guid: d520fd357b2e0f84b8254d50f2c96460, type: 2}
-  - {fileID: 11400000, guid: 13fc3b79ea8098e47a25c16a1e9c9133, type: 2}
   - {fileID: 11400000, guid: e1d6e4fedbe77e249b167d4c80199fe3, type: 2}
+  - {fileID: 11400000, guid: 13fc3b79ea8098e47a25c16a1e9c9133, type: 2}
   defenseTowers:
   - {fileID: 11400000, guid: 1aefe786d920e494191fcfec6e202cc6, type: 2}
   resourceTowers:
+  - {fileID: 11400000, guid: 2e7a09a3d5f844c419bdb001730f3db0, type: 2}
   - {fileID: 11400000, guid: d32bb619d0fc80c46956e98d6eb4881d, type: 2}
   - {fileID: 11400000, guid: e9261d0a8bbac104384b575998a37982, type: 2}
-  - {fileID: 11400000, guid: 2e7a09a3d5f844c419bdb001730f3db0, type: 2}
   menuHeightFraction: 0.25
   attackColor: {r: 0.54901963, g: 0.16470589, b: 0.11372549, a: 0.9490196}
   defenseColor: {r: 0.36078432, g: 0.2784314, b: 0.11764706, a: 0.9490196}
@@ -3106,7 +3101,7 @@ MonoBehaviour:
   spawnManager: {fileID: 1228719311}
   waves:
   - waveName: Wave 1 - Scouts
-    startDelay: 4
+    startDelay: 3
     ships:
     - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
       amount: 5
@@ -3114,7 +3109,7 @@ MonoBehaviour:
       attackChancePercent: 100
       towerAttackChancePercent: 15
   - waveName: Wave 2 - First Landing
-    startDelay: 4
+    startDelay: 3
     ships:
     - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
       amount: 8
@@ -3127,7 +3122,7 @@ MonoBehaviour:
       attackChancePercent: 60
       towerAttackChancePercent: 40
   - waveName: Wave 3 - Assault Fleet
-    startDelay: 4
+    startDelay: 3
     ships:
     - ship: {fileID: 11400000, guid: 2df39992448a64f4ebf20f214e2d00ce, type: 2}
       amount: 6
@@ -3164,7 +3159,7 @@ MonoBehaviour:
       towerAttackChancePercent: 15.1
   timeBetweenWaves: 4
   autoStartWaves: 1
-  autoStartDelay: 35
+  autoStartDelay: 50
   endlessScaling: 1
   difficultyGrowthPerWave: 1.15
 --- !u!4 &1752899031
@@ -4019,7 +4014,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
   m_LocalPosition: {x: -0.24411, y: -20.9, z: -185}
-  m_LocalScale: {x: 816.384, y: 320, z: 25.31932}
+  m_LocalScale: {x: 816.384, y: 862.55994, z: 25.31932}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
