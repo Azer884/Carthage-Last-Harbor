@@ -30,9 +30,12 @@ public class FloatingHealthBar : MonoBehaviour
         return _solidSprite;
     }
 
+    private static readonly Color DefaultFillColor = new Color(.85f, .18f, .16f, .95f);
+
     // `scale` is the canvas's direct localScale (what you'd tune by hand in the Inspector on the "Floating
     // Health Bar" object) rather than an indirect world-width — easier to dial in visually per object type.
-    public static FloatingHealthBar Attach(Transform target, float worldHeight, float scale = .2f)
+    // `fillColor` defaults to the original red (Roman ships); Carthaginian ships/towers pass green explicitly.
+    public static FloatingHealthBar Attach(Transform target, float worldHeight, float scale = .2f, Color? fillColor = null)
     {
         GameObject canvasObject = new GameObject("Floating Health Bar", typeof(Canvas));
         Canvas canvas = canvasObject.GetComponent<Canvas>();
@@ -53,7 +56,7 @@ public class FloatingHealthBar : MonoBehaviour
         fillObject.transform.SetParent(background.transform, false);
         Image fillImage = fillObject.GetComponent<Image>();
         fillImage.sprite = GetSolidSprite();
-        fillImage.color = new Color(.85f, .18f, .16f, .95f);
+        fillImage.color = fillColor ?? DefaultFillColor;
         fillImage.type = Image.Type.Filled;
         fillImage.fillMethod = Image.FillMethod.Horizontal;
         fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;

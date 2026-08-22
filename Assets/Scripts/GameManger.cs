@@ -7,6 +7,10 @@ using UnityEngine.Splines;
 public class GameManger : MonoBehaviour
 {
     public static GameManger Instance;
+    // Gates resource-tower income (see CarthaginianResourceTower) so the extended wave-1 reading window
+    // stays a true calm-before-the-storm instead of quietly stacking up coin before the player's even
+    // engaged with the tutorial tip about it. Stays true forever once wave 1 begins.
+    public static bool FirstWaveHasStarted { get; private set; }
 
     [Header("Path Selection")]
     [SerializeField] private GameObject[] paths;
@@ -17,6 +21,8 @@ public class GameManger : MonoBehaviour
     [SerializeField, Min(0f)] private float timeBetweenWaves = 3f;
     [SerializeField] private bool autoStartWaves = true;
     [SerializeField, Min(0f)] private float autoStartDelay = 20f;
+    [Tooltip("Wave 1 only — longer than autoStartDelay so new players have time to read the opening tips before ships start arriving.")]
+    [SerializeField, Min(0f)] private float firstWaveAutoStartDelay = 45f;
     [Tooltip("Once the hand-authored wave list is exhausted, keep replaying the final wave with ship counts scaled up exponentially.")]
     [SerializeField] private bool endlessScaling = true;
     [SerializeField, Min(1f)] private float difficultyGrowthPerWave = 1.18f;
@@ -63,6 +69,7 @@ public class GameManger : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            FirstWaveHasStarted = false;
         }
         else if (Instance != this)
         {
@@ -98,7 +105,7 @@ public class GameManger : MonoBehaviour
     private void BeginAutoStartCountdown()
     {
         _autoStartPending = true;
-        _autoStartTimer = autoStartDelay;
+        _autoStartTimer = _currentWaveIndex == 0 ? firstWaveAutoStartDelay : autoStartDelay;
     }
 
     public void StartWaveSystem()
@@ -168,6 +175,7 @@ public class GameManger : MonoBehaviour
                 _preWaveDelayActive = false;
             }
 
+            if (_currentWaveIndex == 0) FirstWaveHasStarted = true;
             WaveStarted?.Invoke(_currentWaveIndex);
             yield return SpawnWave(wave);
             yield return new WaitUntil(() => !AnyRomanShipsAlive() || CartageHeart.HasBeenDestroyed);

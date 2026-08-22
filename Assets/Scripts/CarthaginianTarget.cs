@@ -40,7 +40,7 @@ public class CarthaginianTarget : MonoBehaviour, ICombatTarget
                 foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
                 top = bounds.max.y - transform.position.y + .4f;
             }
-            _healthBar = FloatingHealthBar.Attach(transform, top, .08f);
+            _healthBar = FloatingHealthBar.Attach(transform, top, .08f, new Color(.25f, .78f, .3f, .95f));
             _healthBar.SetFraction(1f);
         }
     }

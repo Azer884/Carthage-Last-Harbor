@@ -520,8 +520,13 @@ public class TowerSelectionManager : MonoBehaviour
         {
             if (ship == null) continue;
             bool affordable = EconomyManager.Instance != null && EconomyManager.Instance.Money >= ship.shipCost;
+            int availableCrew = 0;
+            if (CrewRoster.Instance != null)
+                for (int rank = (int)ship.minimumRank; rank <= (int)CrewRank.SacredBand; rank++) availableCrew += CrewRoster.Instance.GetAvailable((CrewRank)rank);
+            bool hasEnoughCrew = availableCrew >= ship.crewRequired;
             output.Append("\n• ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin ").Append(affordable ? "[READY]" : "[NEED COIN]")
-                .Append("\n  ").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+, ").Append(ship.spawnCooldown).Append(" sec spawn");
+                .Append("\n  Crew: ").Append(hasEnoughCrew ? string.Empty : "<color=#FF6B5E>").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+ needed (")
+                .Append(availableCrew).Append(" available)").Append(hasEnoughCrew ? string.Empty : "</color>").Append(", ").Append(ship.spawnCooldown).Append(" sec spawn");
             CarthaginianShipCombat combat = ship.shipPrefab != null ? ship.shipPrefab.GetComponent<CarthaginianShipCombat>() : null;
             if (combat != null)
             {

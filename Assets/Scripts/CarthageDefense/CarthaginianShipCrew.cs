@@ -56,7 +56,7 @@ public class CarthaginianShipCrew : MonoBehaviour, ICombatTarget
             foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
             top = bounds.max.y - transform.position.y + .7f;
         }
-        _healthBar = FloatingHealthBar.Attach(transform, top, .2f);
+        _healthBar = FloatingHealthBar.Attach(transform, top, .2f, new Color(.25f, .78f, .3f, .95f));
         _healthBar.SetFraction(1f);
     }
 

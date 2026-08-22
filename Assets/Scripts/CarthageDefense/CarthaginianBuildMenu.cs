@@ -79,6 +79,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         MusicManager.Ensure().PlayBuildMusic();
         MercenaryMarket.Ensure();
         MercenaryMarketUI.Ensure();
+        TutorialTipsUI.Ensure();
         if (Camera.main != null && Camera.main.GetComponent<TopDownCameraController>() == null) Camera.main.gameObject.AddComponent<TopDownCameraController>();
         if (Camera.main != null && Camera.main.GetComponent<CameraShake>() == null) Camera.main.gameObject.AddComponent<CameraShake>();
         AmbientParticles.Ensure();
@@ -385,7 +386,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
 
         _heartText = CreateText("Heart: -- / --", bar, 14, TextAnchor.MiddleCenter, new Vector2(.04f, .55f), new Vector2(.96f, .95f));
 
-        RectTransform healthBackground = CreatePanel("Heart Health Background", bar, new Color(.12f, .04f, .04f, 1f));
+        RectTransform healthBackground = CreatePanel("Heart Health Background", bar, new Color(.04f, .1f, .05f, 1f));
         healthBackground.anchorMin = new Vector2(.04f, .12f);
         healthBackground.anchorMax = new Vector2(.96f, .48f);
         healthBackground.offsetMin = healthBackground.offsetMax = Vector2.zero;
@@ -394,7 +395,7 @@ public class CarthaginianBuildMenu : MonoBehaviour
         fillObject.transform.SetParent(healthBackground, false);
         Image fillImage = fillObject.GetComponent<Image>();
         fillImage.sprite = FloatingHealthBar.GetSolidSprite();
-        fillImage.color = new Color(.8f, .18f, .16f, 1f);
+        fillImage.color = new Color(.25f, .78f, .3f, 1f);
         fillImage.type = Image.Type.Filled;
         fillImage.fillMethod = Image.FillMethod.Horizontal;
         fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
@@ -814,7 +815,12 @@ public class CarthaginianBuildMenu : MonoBehaviour
             {
                 if (ship == null) continue;
                 text.Append("\nShip: ").Append(ship.shipName).Append(" — ").Append(ship.shipCost).Append(" coin");
-                text.Append("\n  Crew needed: ").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+");
+                int availableCrew = 0;
+                if (CrewRoster.Instance != null)
+                    for (int rank = (int)ship.minimumRank; rank <= (int)CrewRank.SacredBand; rank++) availableCrew += CrewRoster.Instance.GetAvailable((CrewRank)rank);
+                bool hasEnoughCrew = availableCrew >= ship.crewRequired;
+                text.Append("\n  Crew needed: ").Append(ship.crewRequired).Append(" ").Append(ship.minimumRank).Append("+ (")
+                    .Append(hasEnoughCrew ? string.Empty : "<color=#FF6B5E>").Append(availableCrew).Append(" available").Append(hasEnoughCrew ? string.Empty : "</color>").Append(")");
                 CarthaginianShipCombat combat = ship.shipPrefab != null ? ship.shipPrefab.GetComponent<CarthaginianShipCombat>() : null;
                 if (combat != null) text.Append("\n  ").Append(ShipCounterTable.Describe(combat.CombatClass));
             }

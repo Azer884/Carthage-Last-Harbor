@@ -36,6 +36,9 @@ public class CarthaginianResourceTower : MonoBehaviour
     {
         if (!_isStaffed || definition == null || Time.time < _nextProductionTime) return;
         _nextProductionTime = Time.time + definition.productionCycleSeconds;
+        // Keeps pushing the timer forward without banking output during the pre-wave-1 reading window, so
+        // production starts clean at wave 1 instead of dumping several cycles' worth of coin all at once.
+        if (!GameManger.FirstWaveHasStarted) return;
         _storedUnits += definition.unitsPerCycle;
         if (automaticallySell) SellStoredResources();
     }
